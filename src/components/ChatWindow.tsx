@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Message, ChatRoom } from "@/types/chat";
 
-interface Message {
-  id: number;
-  senderId: number;
-  content: string;
-  timestamp: Date;
+interface ChatWindowProps {
+  room?: ChatRoom;
 }
 
 const initialMessages: Message[] = [
@@ -19,34 +17,38 @@ const initialMessages: Message[] = [
     senderId: 1,
     content: "Hello team! How's the solar installation project going?",
     timestamp: new Date("2024-03-10T09:00:00"),
+    roomId: 1,
   },
   {
     id: 2,
     senderId: 2,
     content: "Going well! We've completed the initial setup.",
     timestamp: new Date("2024-03-10T09:05:00"),
+    roomId: 1,
   },
   {
     id: 3,
     senderId: 1,
     content: "Great! Any challenges we should be aware of?",
     timestamp: new Date("2024-03-10T09:10:00"),
+    roomId: 1,
   },
 ];
 
-const ChatWindow = () => {
+const ChatWindow = ({ room }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = useState("");
   const currentUserId = 1; // This would come from authentication
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !room) return;
 
     const message: Message = {
       id: messages.length + 1,
       senderId: currentUserId,
       content: newMessage,
       timestamp: new Date(),
+      roomId: room.id,
     };
 
     setMessages([...messages, message]);
@@ -60,15 +62,28 @@ const ChatWindow = () => {
     }
   };
 
+  const filteredMessages = messages.filter(msg => msg.roomId === room?.id);
+
+  if (!room) {
+    return (
+      <Card className="flex flex-col h-[calc(100vh-12rem)] items-center justify-center text-gray-500">
+        <p>Select a chat to start messaging</p>
+      </Card>
+    );
+  }
+
   return (
     <Card className="flex flex-col h-[calc(100vh-12rem)]">
       <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">Team Chat</h2>
+        <h2 className="text-lg font-semibold">{room.name}</h2>
+        <p className="text-sm text-gray-500">
+          {room.type === 'team' ? 'Team Chat' : 'Direct Message'}
+        </p>
       </div>
 
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message) => (
+          {filteredMessages.map((message) => (
             <div
               key={message.id}
               className={`flex items-start gap-3 ${
