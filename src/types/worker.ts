@@ -5,7 +5,10 @@ export interface Worker {
   projects: number;
   email?: string;
   phone?: string;
-  status?: 'active' | 'inactive';
+  address?: string;
+  image?: string;
+  pay?: number;
+  status: 'active' | 'inactive';
 }
 
 export interface CreateWorkerInput {
@@ -13,4 +16,6 @@ export interface CreateWorkerInput {
   role: string;
   email?: string;
   phone?: string;
+  address?: string;
+  pay?: number;
 }

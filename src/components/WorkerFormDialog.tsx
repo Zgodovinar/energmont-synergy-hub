@@ -19,6 +19,8 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
     role: worker?.role || "",
     email: worker?.email || "",
     phone: worker?.phone || "",
+    address: worker?.address || "",
+    pay: worker?.pay || undefined,
   });
   const { toast } = useToast();
 
@@ -34,7 +36,7 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
     }
     onSave(formData);
     setOpen(false);
-    setFormData({ name: "", role: "", email: "", phone: "" });
+    setFormData({ name: "", role: "", email: "", phone: "", address: "", pay: undefined });
   };
 
   return (
@@ -82,6 +84,25 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="Enter worker phone"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Input
+              id="address"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Enter worker address"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pay">Pay Rate ($/hour)</Label>
+            <Input
+              id="pay"
+              type="number"
+              value={formData.pay}
+              onChange={(e) => setFormData({ ...formData, pay: Number(e.target.value) })}
+              placeholder="Enter hourly pay rate"
             />
           </div>
           <div className="flex justify-end space-x-2">
