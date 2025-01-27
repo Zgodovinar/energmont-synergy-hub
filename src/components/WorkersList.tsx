@@ -63,7 +63,7 @@ const WorkersList = () => {
   );
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 w-full">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Workers</h2>
         <div className="flex items-center space-x-4">
