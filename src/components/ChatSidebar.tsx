@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,7 +32,7 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [rooms, setRooms] = useState<ChatRoom[]>(initialRooms);
 
-  const createDirectChat = (user: ChatUser) => {
+  const createDirectChat = useCallback((user: ChatUser) => {
     const existingRoom = rooms.find(
       room => room.type === 'direct' && 
       room.participants.length === 2 && 
@@ -45,15 +45,16 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
     }
 
     const newRoom: ChatRoom = {
-      id: rooms.length + 1,
+      id: Math.max(...rooms.map(r => r.id), 0) + 1,
       name: user.name,
       type: 'direct',
       participants: [1, user.id], // Assuming current user is id: 1
+      lastMessageTime: new Date()
     };
 
-    setRooms([...rooms, newRoom]);
+    setRooms(prevRooms => [...prevRooms, newRoom]);
     onRoomSelect(newRoom);
-  };
+  }, [rooms, onRoomSelect]);
 
   const filteredItems = searchQuery
     ? [...initialUsers.filter(user => 
@@ -86,7 +87,7 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
 
             return (
               <div
-                key={item.id}
+                key={`${isUser ? 'user' : 'room'}-${item.id}`}
                 className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer hover:bg-accent ${
                   isSelected ? 'bg-accent' : ''
                 }`}

@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Edit2, Trash2, Eye, Upload } from "lucide-react";
+import { Search, Edit2, Trash2, Eye, Upload, X } from "lucide-react";
 import WorkerFormDialog from "./WorkerFormDialog";
 import { Worker, CreateWorkerInput } from "@/types/worker";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const initialWorkers = [
   { 
@@ -40,6 +41,7 @@ const WorkersList = () => {
   const [workers, setWorkers] = useState<Worker[]>(initialWorkers);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"edit" | "view">("edit");
+  const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const { toast } = useToast();
 
   const handleAddWorker = (data: CreateWorkerInput) => {
@@ -91,6 +93,10 @@ const WorkersList = () => {
             ? { ...worker, image: reader.result as string }
             : worker
         ));
+        toast({
+          title: "Success",
+          description: "Worker image updated successfully",
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -184,7 +190,11 @@ const WorkersList = () => {
                   </Button>
                 </>
               ) : (
-                <Button variant="ghost" size="icon">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedWorker(worker)}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               )}
@@ -192,6 +202,54 @@ const WorkersList = () => {
           </div>
         ))}
       </div>
+
+      {selectedWorker && (
+        <Dialog open={true} onOpenChange={() => setSelectedWorker(null)}>
+          <DialogContent className="max-w-2xl">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={selectedWorker.image} alt={selectedWorker.name} />
+                  <AvatarFallback>{selectedWorker.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-2xl font-semibold">{selectedWorker.name}</h2>
+                  <p className="text-gray-500">{selectedWorker.role}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                  <p>{selectedWorker.email}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Phone</h3>
+                  <p>{selectedWorker.phone}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Address</h3>
+                  <p>{selectedWorker.address}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Pay Rate</h3>
+                  <p>${selectedWorker.pay}/hr</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                  <Badge variant={selectedWorker.status === 'active' ? 'default' : 'secondary'}>
+                    {selectedWorker.status}
+                  </Badge>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500">Active Projects</h3>
+                  <p>{selectedWorker.projects}</p>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 };
