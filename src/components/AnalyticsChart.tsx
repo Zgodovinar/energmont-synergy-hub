@@ -8,6 +8,12 @@ const data = [
   { month: "Apr", projects: 5, cost: 55000, profit: 18000 },
   { month: "May", projects: 7, cost: 75000, profit: 25000 },
   { month: "Jun", projects: 9, cost: 95000, profit: 35000 },
+  { month: "Jul", projects: 8, cost: 85000, profit: 28000 },
+  { month: "Aug", projects: 7, cost: 75000, profit: 24000 },
+  { month: "Sep", projects: 6, cost: 65000, profit: 20000 },
+  { month: "Oct", projects: 8, cost: 85000, profit: 30000 },
+  { month: "Nov", projects: 9, cost: 95000, profit: 35000 },
+  { month: "Dec", projects: 7, cost: 75000, profit: 25000 },
 ];
 
 const AnalyticsChart = () => {

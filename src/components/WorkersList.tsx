@@ -111,10 +111,10 @@ const WorkersList = () => {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 className="text-xl font-semibold">Workers</h2>
-        <div className="flex items-center space-x-4">
-          <div className="relative w-64">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search workers..."
@@ -126,6 +126,7 @@ const WorkersList = () => {
           <Button
             variant="outline"
             onClick={() => setViewMode(viewMode === "edit" ? "view" : "edit")}
+            className="whitespace-nowrap"
           >
             {viewMode === "edit" ? "View Mode" : "Edit Mode"}
           </Button>
