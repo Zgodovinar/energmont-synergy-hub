@@ -110,14 +110,14 @@ const ProjectView = ({ project, onClose }: ProjectViewProps) => {
                 <Card className="p-6">
                   <div className="space-y-4">
                     {project.assignedWorkers.length > 0 ? (
-                      project.assignedWorkers.map((workerId) => (
-                        <div key={workerId} className="flex items-center space-x-4">
+                      project.assignedWorkers.map((worker) => (
+                        <div key={worker.id} className="flex items-center space-x-4">
                           <Avatar>
-                            <AvatarImage src={`/placeholder.svg`} />
-                            <AvatarFallback>W{workerId}</AvatarFallback>
+                            <AvatarImage src={worker.avatar} alt={worker.name} />
+                            <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">Worker {workerId}</p>
+                            <p className="font-medium">{worker.name}</p>
                             <p className="text-sm text-gray-500">Assigned to project</p>
                           </div>
                         </div>
