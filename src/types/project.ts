@@ -1,3 +1,9 @@
+interface AssignedWorker {
+  id: number;
+  name: string;
+  avatar: string;
+}
+
 export interface Project {
   id: number;
   name: string;
@@ -8,7 +14,7 @@ export interface Project {
   cost: number;
   profit: number;
   notes?: string;
-  assignedWorkers: number[];
+  assignedWorkers: AssignedWorker[];
   images: string[];
 }
 

@@ -13,6 +13,10 @@ export interface ChatRoom {
   participants: number[];
   lastMessage?: string;
   lastMessageTime?: Date;
+  userInfo?: {
+    isOnline?: boolean;
+    role?: string;
+  };
 }
 
 export interface Message {
