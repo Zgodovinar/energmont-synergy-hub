@@ -8,7 +8,7 @@ const Index = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 p-8 transition-all duration-300 ease-in-out">
+      <main className="flex-1 ml-[16rem] p-8 transition-all duration-300 ease-in-out">
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
         
         <DashboardMetrics />

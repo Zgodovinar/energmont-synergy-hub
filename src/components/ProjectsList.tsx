@@ -8,6 +8,7 @@ import ProjectFormDialog from "./ProjectFormDialog";
 import ProjectView from "./ProjectView";
 import { Project, CreateProjectInput } from "@/types/project";
 import { useToast } from "@/components/ui/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const initialProjects = [
   { 
@@ -15,12 +16,15 @@ const initialProjects = [
     name: "Solar Installation Project", 
     description: "Installation of solar panels for residential complex",
     status: "in_progress" as const,
-    startDate: "2024-02-15", // Added startDate
+    startDate: "2024-02-15",
     deadline: "2024-03-15",
     cost: 25000,
     profit: 8000,
     notes: "Need to order additional panels",
-    assignedWorkers: [1, 2],
+    assignedWorkers: [
+      { id: 1, name: "John Smith", avatar: "/placeholder.svg" },
+      { id: 2, name: "Anna Johnson", avatar: "/placeholder.svg" }
+    ],
     images: []
   },
   { 
@@ -28,12 +32,14 @@ const initialProjects = [
     name: "Wind Farm Maintenance", 
     description: "Regular maintenance of wind turbines",
     status: "completed" as const,
-    startDate: "2024-02-10", // Added startDate
+    startDate: "2024-02-10",
     deadline: "2024-03-10",
     cost: 15000,
     profit: 5000,
     notes: "All turbines functioning properly",
-    assignedWorkers: [3],
+    assignedWorkers: [
+      { id: 3, name: "Mike Wilson", avatar: "/placeholder.svg" }
+    ],
     images: []
   },
   { 
@@ -41,12 +47,14 @@ const initialProjects = [
     name: "Energy Audit", 
     description: "Comprehensive energy audit for commercial building",
     status: "pending" as const,
-    startDate: "2024-02-20", // Added startDate
+    startDate: "2024-02-20",
     deadline: "2024-03-20",
     cost: 5000,
     profit: 2000,
     notes: "Initial assessment scheduled",
-    assignedWorkers: [4],
+    assignedWorkers: [
+      { id: 4, name: "Sarah Davis", avatar: "/placeholder.svg" }
+    ],
     images: []
   },
 ];
@@ -151,6 +159,15 @@ const ProjectsList = () => {
                 <p className="text-sm text-gray-600">Due {new Date(project.deadline).toLocaleDateString()}</p>
                 <p className="text-sm text-gray-600">Cost: ${project.cost}</p>
                 <p className="text-sm text-gray-600">Profit: ${project.profit}</p>
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <p className="text-sm text-gray-600 mr-2">Team:</p>
+                {project.assignedWorkers.map((worker) => (
+                  <Avatar key={worker.id} className="h-8 w-8">
+                    <AvatarImage src={worker.avatar} alt={worker.name} />
+                    <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                ))}
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,8 @@ const initialRooms: ChatRoom[] = [
     type: "team",
     participants: [1, 2, 3],
     lastMessage: "Great work everyone!",
-    lastMessageTime: new Date()
+    lastMessageTime: new Date(),
+    userInfo: null
   }
 ];
 
@@ -49,7 +50,11 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
       name: user.name,
       type: 'direct',
       participants: [1, user.id],
-      lastMessageTime: new Date()
+      lastMessageTime: new Date(),
+      userInfo: {
+        isOnline: user.isOnline,
+        role: user.role
+      }
     };
 
     setRooms(prevRooms => [...prevRooms, newRoom]);
@@ -107,10 +112,15 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{item.name}</p>
                   <p className="text-xs text-gray-500 truncate">
-                    {isUser ? (item as ChatUser).role : (item as ChatRoom).lastMessage}
+                    {isUser 
+                      ? (item as ChatUser).role 
+                      : (item as ChatRoom).type === 'direct' && (item as ChatRoom).userInfo
+                        ? (item as ChatRoom).userInfo.role
+                        : (item as ChatRoom).lastMessage
+                    }
                   </p>
                 </div>
-                {isUser && (item as ChatUser).isOnline && (
+                {(isUser ? (item as ChatUser).isOnline : (item as ChatRoom).type === 'direct' && (item as ChatRoom).userInfo?.isOnline) && (
                   <div className="w-2 h-2 bg-green-500 rounded-full" />
                 )}
               </div>
