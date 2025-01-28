@@ -3,6 +3,7 @@ export interface Project {
   name: string;
   description?: string;
   status: 'pending' | 'in_progress' | 'completed';
+  startDate: string;
   deadline: string;
   cost: number;
   profit: number;
@@ -15,8 +16,10 @@ export interface CreateProjectInput {
   name: string;
   description?: string;
   status: Project['status'];
+  startDate: string;
   deadline: string;
   cost?: string;
   profit?: string;
   notes?: string;
+  images?: string[];
 }

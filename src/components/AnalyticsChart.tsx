@@ -24,7 +24,7 @@ const AnalyticsChart = () => {
             <Tooltip />
             <Legend />
             <Bar yAxisId="left" dataKey="projects" fill="#FF7A00" name="Projects" />
-            <Bar yAxisId="right" dataKey="cost" fill="#0066FF" name="Cost ($)" />
+            <Bar yAxisId="right" dataKey="cost" fill="#FF0000" name="Cost ($)" />
             <Bar yAxisId="right" dataKey="profit" fill="#00CC66" name="Profit ($)" />
           </BarChart>
         </ResponsiveContainer>

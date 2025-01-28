@@ -1,22 +1,45 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Edit2, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search, Edit2, Trash2, Eye, Upload } from "lucide-react";
 import WorkerFormDialog from "./WorkerFormDialog";
 import { Worker, CreateWorkerInput } from "@/types/worker";
 import { useToast } from "@/components/ui/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const initialWorkers = [
-  { id: 1, name: "John Smith", role: "Project Manager", projects: 5, email: "john@example.com", status: "active" as const },
-  { id: 2, name: "Anna Johnson", role: "Senior Engineer", projects: 3, email: "anna@example.com", status: "active" as const },
-  { id: 3, name: "Mike Wilson", role: "Technician", projects: 4, email: "mike@example.com", status: "active" as const },
-  { id: 4, name: "Sarah Brown", role: "Engineer", projects: 2, email: "sarah@example.com", status: "active" as const },
+  { 
+    id: 1, 
+    name: "John Smith", 
+    role: "Project Manager", 
+    projects: 5, 
+    email: "john@example.com", 
+    phone: "+1234567890",
+    address: "123 Main St",
+    status: "active" as const,
+    pay: 25,
+    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  },
+  { 
+    id: 2, 
+    name: "Anna Johnson", 
+    role: "Senior Engineer", 
+    projects: 3, 
+    email: "anna@example.com",
+    phone: "+1234567891",
+    address: "456 Oak St",
+    status: "active" as const,
+    pay: 30,
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+  },
 ];
 
 const WorkersList = () => {
   const [workers, setWorkers] = useState<Worker[]>(initialWorkers);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"edit" | "view">("edit");
   const { toast } = useToast();
 
   const handleAddWorker = (data: CreateWorkerInput) => {
@@ -25,6 +48,7 @@ const WorkersList = () => {
       ...data,
       projects: 0,
       status: "active",
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
     };
     setWorkers([...workers, newWorker]);
     toast({
@@ -57,13 +81,29 @@ const WorkersList = () => {
     }
   };
 
+  const handleImageUpload = (workerId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setWorkers(workers.map(worker => 
+          worker.id === workerId 
+            ? { ...worker, image: reader.result as string }
+            : worker
+        ));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const filteredWorkers = workers.filter((worker) =>
     worker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    worker.role.toLowerCase().includes(searchQuery.toLowerCase())
+    worker.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    worker.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <Card className="p-6 w-full">
+    <Card className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Workers</h2>
         <div className="flex items-center space-x-4">
@@ -76,45 +116,78 @@ const WorkersList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <WorkerFormDialog onSave={handleAddWorker} />
+          <Button
+            variant="outline"
+            onClick={() => setViewMode(viewMode === "edit" ? "view" : "edit")}
+          >
+            {viewMode === "edit" ? "View Mode" : "Edit Mode"}
+          </Button>
+          {viewMode === "edit" && <WorkerFormDialog onSave={handleAddWorker} />}
         </div>
       </div>
       
-      <div className="divide-y">
+      <div className="space-y-4">
         {filteredWorkers.map((worker) => (
           <div
             key={worker.id}
-            className="flex items-center justify-between py-4"
+            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
           >
-            <div>
-              <h3 className="font-medium">{worker.name}</h3>
-              <p className="text-sm text-gray-600">{worker.role}</p>
-              {worker.email && (
-                <p className="text-sm text-gray-500">{worker.email}</p>
-              )}
-            </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
+              <div className="relative group">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={worker.image} alt={worker.name} />
+                  <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                {viewMode === "edit" && (
+                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <Upload className="h-4 w-4 text-white" />
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(worker.id, e)}
+                    />
+                  </label>
+                )}
+              </div>
+              <div>
+                <h3 className="font-medium">{worker.name}</h3>
+                <p className="text-sm text-gray-600">{worker.role}</p>
+                <p className="text-sm text-gray-500">{worker.email}</p>
+                <div className="flex items-center gap-4 mt-1">
+                  <p className="text-sm text-gray-500">{worker.phone}</p>
+                  <p className="text-sm text-gray-500">${worker.pay}/hr</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline">
                 {worker.projects} active projects
-              </div>
-              <div className="flex items-center space-x-2">
-                <WorkerFormDialog
-                  worker={worker}
-                  onSave={handleEditWorker(worker.id)}
-                  trigger={
-                    <Button variant="ghost" size="icon">
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                  }
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteWorker(worker.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
+              </Badge>
+              {viewMode === "edit" ? (
+                <>
+                  <WorkerFormDialog
+                    worker={worker}
+                    onSave={handleEditWorker(worker.id)}
+                    trigger={
+                      <Button variant="ghost" size="icon">
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteWorker(worker.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button variant="ghost" size="icon">
+                  <Eye className="h-4 w-4" />
                 </Button>
-              </div>
+              )}
             </div>
           </div>
         ))}
