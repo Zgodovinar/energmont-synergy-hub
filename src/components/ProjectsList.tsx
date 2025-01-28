@@ -15,6 +15,7 @@ const initialProjects = [
     name: "Solar Installation Project", 
     description: "Installation of solar panels for residential complex",
     status: "in_progress" as const,
+    startDate: "2024-02-15", // Added startDate
     deadline: "2024-03-15",
     cost: 25000,
     profit: 8000,
@@ -27,6 +28,7 @@ const initialProjects = [
     name: "Wind Farm Maintenance", 
     description: "Regular maintenance of wind turbines",
     status: "completed" as const,
+    startDate: "2024-02-10", // Added startDate
     deadline: "2024-03-10",
     cost: 15000,
     profit: 5000,
@@ -39,6 +41,7 @@ const initialProjects = [
     name: "Energy Audit", 
     description: "Comprehensive energy audit for commercial building",
     status: "pending" as const,
+    startDate: "2024-02-20", // Added startDate
     deadline: "2024-03-20",
     cost: 5000,
     profit: 2000,
