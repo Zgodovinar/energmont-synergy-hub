@@ -8,7 +8,8 @@ import WorkerFormDialog from "./WorkerFormDialog";
 import { Worker, CreateWorkerInput } from "@/types/worker";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const initialWorkers = [
   { 
@@ -132,76 +133,78 @@ const WorkersList = () => {
         </div>
       </div>
       
-      <div className="space-y-4">
-        {filteredWorkers.map((worker) => (
-          <div
-            key={worker.id}
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="relative group">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={worker.image} alt={worker.name} />
-                  <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                {viewMode === "edit" && (
-                  <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                    <Upload className="h-4 w-4 text-white" />
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(worker.id, e)}
-                    />
-                  </label>
-                )}
-              </div>
-              <div>
-                <h3 className="font-medium">{worker.name}</h3>
-                <p className="text-sm text-gray-600">{worker.role}</p>
-                <p className="text-sm text-gray-500">{worker.email}</p>
-                <div className="flex items-center gap-4 mt-1">
-                  <p className="text-sm text-gray-500">{worker.phone}</p>
-                  <p className="text-sm text-gray-500">${worker.pay}/hr</p>
+      <ScrollArea className="h-[calc(100vh-16rem)]">
+        <div className="space-y-4">
+          {filteredWorkers.map((worker) => (
+            <div
+              key={worker.id}
+              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="relative group">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={worker.image} alt={worker.name} />
+                    <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  {viewMode === "edit" && (
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                      <Upload className="h-4 w-4 text-white" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(worker.id, e)}
+                      />
+                    </label>
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-medium">{worker.name}</h3>
+                  <p className="text-sm text-gray-600">{worker.role}</p>
+                  <p className="text-sm text-gray-500">{worker.email}</p>
+                  <div className="flex items-center gap-4 mt-1">
+                    <p className="text-sm text-gray-500">{worker.phone}</p>
+                    <p className="text-sm text-gray-500">${worker.pay}/hr</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline">
-                {worker.projects} active projects
-              </Badge>
-              {viewMode === "edit" ? (
-                <>
-                  <WorkerFormDialog
-                    worker={worker}
-                    onSave={handleEditWorker(worker.id)}
-                    trigger={
-                      <Button variant="ghost" size="icon">
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline">
+                  {worker.projects} active projects
+                </Badge>
+                {viewMode === "edit" ? (
+                  <>
+                    <WorkerFormDialog
+                      worker={worker}
+                      onSave={handleEditWorker(worker.id)}
+                      trigger={
+                        <Button variant="ghost" size="icon">
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      }
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteWorker(worker.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                ) : (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDeleteWorker(worker.id)}
+                    onClick={() => setSelectedWorker(worker)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Eye className="h-4 w-4" />
                   </Button>
-                </>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedWorker(worker)}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </ScrollArea>
 
       {selectedWorker && (
         <Dialog open={true} onOpenChange={() => setSelectedWorker(null)}>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,17 @@ const ChatWindow = ({ room }: ChatWindowProps) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [newMessage, setNewMessage] = useState("");
   const currentUserId = 1; // This would come from authentication
+  const [scrollToBottom, setScrollToBottom] = useState(false);
+
+  useEffect(() => {
+    if (scrollToBottom) {
+      const scrollArea = document.querySelector('.messages-scroll-area');
+      if (scrollArea) {
+        scrollArea.scrollTop = scrollArea.scrollHeight;
+      }
+      setScrollToBottom(false);
+    }
+  }, [scrollToBottom]);
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !room) return;
@@ -53,6 +64,7 @@ const ChatWindow = ({ room }: ChatWindowProps) => {
 
     setMessages([...messages, message]);
     setNewMessage("");
+    setScrollToBottom(true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -81,7 +93,7 @@ const ChatWindow = ({ room }: ChatWindowProps) => {
         </p>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4 messages-scroll-area">
         <div className="space-y-4">
           {filteredMessages.map((message) => (
             <div

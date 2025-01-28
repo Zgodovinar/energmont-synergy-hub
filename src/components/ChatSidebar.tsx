@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -48,7 +48,7 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
       id: Math.max(...rooms.map(r => r.id), 0) + 1,
       name: user.name,
       type: 'direct',
-      participants: [1, user.id], // Assuming current user is id: 1
+      participants: [1, user.id],
       lastMessageTime: new Date()
     };
 
@@ -63,7 +63,12 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
       ...rooms.filter(room =>
         room.name.toLowerCase().includes(searchQuery.toLowerCase())
       )]
-    : [...initialUsers, ...rooms];
+    : [...rooms, ...initialUsers.filter(user => 
+        !rooms.some(room => 
+          room.type === 'direct' && 
+          room.participants.includes(user.id)
+        )
+      )];
 
   return (
     <Card className="w-80 h-full border-r">

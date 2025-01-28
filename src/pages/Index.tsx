@@ -8,14 +8,18 @@ const Index = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8 transition-all duration-300 ease-in-out">
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
         
         <DashboardMetrics />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-          <WorkersList />
-          <ProjectsList />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8">
+          <div className="w-full">
+            <WorkersList />
+          </div>
+          <div className="w-full">
+            <ProjectsList />
+          </div>
         </div>
         
         <div className="mt-8">
