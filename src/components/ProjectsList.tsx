@@ -130,10 +130,11 @@ const ProjectsList = () => {
 
   return (
     <Card className="p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="space-y-4">
         <h2 className="text-xl font-semibold">Projects</h2>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <div className="relative w-full sm:w-64">
+        
+        <div className="flex flex-col gap-4">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search projects..."
@@ -142,57 +143,62 @@ const ProjectsList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <ProjectFormDialog onSave={handleAddProject} />
+          <div className="flex justify-end">
+            <ProjectFormDialog onSave={handleAddProject} />
+          </div>
         </div>
       </div>
       
-      <div className="space-y-4">
+      <div className="space-y-4 mt-6">
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+            className="flex flex-col p-4 bg-gray-50 rounded-lg space-y-4"
           >
-            <div className="flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium">{project.name}</h3>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(project.status)}>
-                    {project.status.replace('_', ' ')}
-                  </Badge>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setSelectedProject(project)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <ProjectFormDialog
-                      project={project}
-                      onSave={handleEditProject(project.id)}
-                      trigger={
-                        <Button variant="ghost" size="icon">
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      }
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteProject(project.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+            <div className="flex justify-between items-start">
+              <h3 className="font-medium">{project.name}</h3>
+              <div className="flex flex-col items-end space-y-2">
+                <Badge className={getStatusColor(project.status)}>
+                  {project.status.replace('_', ' ')}
+                </Badge>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSelectedProject(project)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <ProjectFormDialog
+                    project={project}
+                    onSave={handleEditProject(project.id)}
+                    trigger={
+                      <Button variant="ghost" size="icon">
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteProject(project.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 mt-1">{project.description}</p>
-              <div className="flex items-center gap-4 mt-2">
+            </div>
+            
+            <p className="text-sm text-gray-600">{project.description}</p>
+            
+            <div className="flex flex-col space-y-2">
+              <div className="flex items-center gap-4">
                 <p className="text-sm text-gray-600">Due {new Date(project.deadline).toLocaleDateString()}</p>
                 <p className="text-sm text-gray-600">Cost: ${project.cost}</p>
                 <p className="text-sm text-gray-600">Profit: ${project.profit}</p>
               </div>
-              <div className="flex items-center gap-2 mt-3">
+              
+              <div className="flex items-center gap-2">
                 <p className="text-sm text-gray-600 mr-2">Team:</p>
                 {project.assignedWorkers.map((worker) => (
                   <Avatar key={worker.id} className="h-8 w-8">

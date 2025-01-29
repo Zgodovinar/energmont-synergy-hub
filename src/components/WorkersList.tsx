@@ -111,10 +111,11 @@ const WorkersList = () => {
 
   return (
     <Card className="p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="space-y-4">
         <h2 className="text-xl font-semibold">Workers</h2>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <div className="relative w-full sm:w-64">
+        
+        <div className="flex flex-col gap-4">
+          <div className="relative w-full">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search workers..."
@@ -123,84 +124,93 @@ const WorkersList = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setViewMode(viewMode === "edit" ? "view" : "edit")}
-            className="whitespace-nowrap"
-          >
-            {viewMode === "edit" ? "View Mode" : "Edit Mode"}
-          </Button>
-          {viewMode === "edit" && <WorkerFormDialog onSave={handleAddWorker} />}
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setViewMode(viewMode === "edit" ? "view" : "edit")}
+              className="whitespace-nowrap"
+            >
+              {viewMode === "edit" ? "View Mode" : "Edit Mode"}
+            </Button>
+            {viewMode === "edit" && <WorkerFormDialog onSave={handleAddWorker} />}
+          </div>
         </div>
       </div>
       
-      <ScrollArea className="h-[calc(100vh-16rem)]">
+      <ScrollArea className="h-[calc(100vh-16rem)] mt-6">
         <div className="space-y-4">
           {filteredWorkers.map((worker) => (
             <div
               key={worker.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+              className="flex flex-col p-4 bg-gray-50 rounded-lg space-y-4"
             >
-              <div className="flex items-center space-x-4">
-                <div className="relative group">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={worker.image} alt={worker.name} />
-                    <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  {viewMode === "edit" && (
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                      <Upload className="h-4 w-4 text-white" />
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(worker.id, e)}
-                      />
-                    </label>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-medium">{worker.name}</h3>
-                  <p className="text-sm text-gray-600">{worker.role}</p>
-                  <p className="text-sm text-gray-500">{worker.email}</p>
-                  <div className="flex items-center gap-4 mt-1">
-                    <p className="text-sm text-gray-500">{worker.phone}</p>
-                    <p className="text-sm text-gray-500">${worker.pay}/hr</p>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="relative group">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={worker.image} alt={worker.name} />
+                      <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {viewMode === "edit" && (
+                      <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                        <Upload className="h-4 w-4 text-white" />
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(worker.id, e)}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{worker.name}</h3>
+                    <p className="text-sm text-gray-600">{worker.role}</p>
+                    <p className="text-sm text-gray-500">{worker.email}</p>
+                    <div className="flex items-center gap-4 mt-1">
+                      <p className="text-sm text-gray-500">{worker.phone}</p>
+                      <p className="text-sm text-gray-500">${worker.pay}/hr</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline">
-                  {worker.projects} active projects
-                </Badge>
-                {viewMode === "edit" ? (
-                  <>
-                    <WorkerFormDialog
-                      worker={worker}
-                      onSave={handleEditWorker(worker.id)}
-                      trigger={
-                        <Button variant="ghost" size="icon">
-                          <Edit2 className="h-4 w-4" />
+                
+                <div className="flex flex-col items-end space-y-2">
+                  <Badge variant="outline" className="mb-2">
+                    {worker.projects} active projects
+                  </Badge>
+                  
+                  <div className="flex items-center space-x-2">
+                    {viewMode === "edit" ? (
+                      <>
+                        <WorkerFormDialog
+                          worker={worker}
+                          onSave={handleEditWorker(worker.id)}
+                          trigger={
+                            <Button variant="ghost" size="icon">
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          }
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteWorker(worker.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      }
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteWorker(worker.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSelectedWorker(worker)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                )}
+                      </>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedWorker(worker)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
