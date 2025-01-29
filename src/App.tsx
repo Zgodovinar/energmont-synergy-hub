@@ -11,6 +11,7 @@ import Chat from "./pages/Chat";
 import Files from "./pages/Files";
 import Calendar from "./pages/Calendar";
 import Items from "./pages/Items";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/files" element={<Files />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/items" element={<Items />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
