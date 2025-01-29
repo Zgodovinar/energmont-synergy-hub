@@ -5,7 +5,10 @@ import {
   Users, 
   FolderKanban, 
   BarChart3, 
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Calendar,
+  Database
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -17,6 +20,9 @@ const Sidebar = () => {
     { icon: FolderKanban, label: "Projects", path: "/projects" },
     { icon: BarChart3, label: "Analytics", path: "/analytics" },
     { icon: MessageSquare, label: "Chat", path: "/chat" },
+    { icon: FileText, label: "Files", path: "/files" },
+    { icon: Calendar, label: "Calendar", path: "/calendar" },
+    { icon: Database, label: "Items", path: "/items" },
   ];
 
   return (
