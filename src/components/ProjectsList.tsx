@@ -38,7 +38,7 @@ const initialProjects = [
     profit: 5000,
     notes: "All turbines functioning properly",
     assignedWorkers: [
-      { id: 3, name: "Mike Wilson", avatar: "/placeholder.svg" }
+      { id: 1, name: "John Smith", avatar: "/placeholder.svg" }
     ],
     images: []
   },
@@ -53,7 +53,7 @@ const initialProjects = [
     profit: 2000,
     notes: "Initial assessment scheduled",
     assignedWorkers: [
-      { id: 4, name: "Sarah Davis", avatar: "/placeholder.svg" }
+      { id: 2, name: "Anna Johnson", avatar: "/placeholder.svg" }
     ],
     images: []
   },
@@ -131,21 +131,19 @@ const ProjectsList = () => {
   return (
     <Card className="p-6">
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Projects</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Projects</h2>
+          <ProjectFormDialog onSave={handleAddProject} />
+        </div>
         
-        <div className="flex flex-col gap-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search projects..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-end">
-            <ProjectFormDialog onSave={handleAddProject} />
-          </div>
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search projects..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
       
@@ -153,11 +151,14 @@ const ProjectsList = () => {
         {filteredProjects.map((project) => (
           <div
             key={project.id}
-            className="flex flex-col p-4 bg-gray-50 rounded-lg space-y-4"
+            className="flex flex-col p-4 bg-gray-50 rounded-lg space-y-2"
           >
             <div className="flex justify-between items-start">
-              <h3 className="font-medium">{project.name}</h3>
-              <div className="flex flex-col items-end space-y-2">
+              <div className="space-y-2">
+                <h3 className="font-medium">{project.name}</h3>
+                <p className="text-sm text-gray-600">{project.description}</p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
                 <Badge className={getStatusColor(project.status)}>
                   {project.status.replace('_', ' ')}
                 </Badge>
@@ -188,8 +189,6 @@ const ProjectsList = () => {
                 </div>
               </div>
             </div>
-            
-            <p className="text-sm text-gray-600">{project.description}</p>
             
             <div className="flex flex-col space-y-2">
               <div className="flex items-center gap-4">

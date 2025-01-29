@@ -94,6 +94,7 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
           {filteredItems.map((item) => {
             const isUser = 'role' in item;
             const isSelected = !isUser && item.id === selectedRoomId;
+            const isDirectChat = !isUser && (item as ChatRoom).type === 'direct';
 
             return (
               <div
@@ -104,9 +105,12 @@ const ChatSidebar = ({ onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
                 onClick={() => isUser ? createDirectChat(item as ChatUser) : onRoomSelect(item as ChatRoom)}
               >
                 <Avatar>
-                  <AvatarImage src={isUser ? (item as ChatUser).avatar : undefined} />
+                  <AvatarImage 
+                    src={isUser ? (item as ChatUser).avatar : undefined} 
+                    alt={item.name}
+                  />
                   <AvatarFallback>
-                    {isUser ? (item as ChatUser).name.charAt(0) : <Users className="h-4 w-4" />}
+                    {isDirectChat ? (item as ChatRoom).name.charAt(0) : <Users className="h-4 w-4" />}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">

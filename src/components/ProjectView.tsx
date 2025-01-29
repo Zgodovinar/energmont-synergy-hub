@@ -66,7 +66,6 @@ const ProjectView = ({ project, onClose }: ProjectViewProps) => {
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="workers">Workers</TabsTrigger>
                 <TabsTrigger value="images">Images</TabsTrigger>
-                <TabsTrigger value="notes">Notes</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details">
@@ -102,6 +101,13 @@ const ProjectView = ({ project, onClose }: ProjectViewProps) => {
                         <p className="mt-1">${project.profit}</p>
                       </div>
                     </div>
+
+                    {project.notes && (
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-500">Notes</h3>
+                        <p className="mt-1 whitespace-pre-wrap">{project.notes}</p>
+                      </div>
+                    )}
                   </div>
                 </Card>
               </TabsContent>
@@ -186,16 +192,6 @@ const ProjectView = ({ project, onClose }: ProjectViewProps) => {
                     </div>
                   ) : (
                     <p className="text-gray-500">No images uploaded for this project</p>
-                  )}
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="notes">
-                <Card className="p-6">
-                  {project.notes ? (
-                    <p className="whitespace-pre-wrap">{project.notes}</p>
-                  ) : (
-                    <p className="text-gray-500">No notes added for this project</p>
                   )}
                 </Card>
               </TabsContent>
