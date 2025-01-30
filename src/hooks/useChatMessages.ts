@@ -49,26 +49,28 @@ export const useChatMessages = (roomId?: string) => {
     mutationFn: async ({ roomId, content }: { roomId: string; content: string }) => {
       console.log('Sending message:', { roomId, content });
       
+      const currentUser = await supabase.auth.getUser();
+      if (!currentUser.data.user) {
+        throw new Error('Not authenticated');
+      }
+
       // First verify that the room exists and the current user is a participant
       const { data: room, error: roomError } = await supabase
-        .from('chat_rooms')
+        .from('chat_room_participants')
         .select(`
-          id,
-          chat_room_participants!inner (
-            worker_id
+          room_id,
+          chat_rooms!inner (
+            id,
+            name
           )
         `)
-        .eq('id', roomId)
+        .eq('room_id', roomId)
+        .eq('worker_id', currentUser.data.user.id)
         .maybeSingle();
 
       if (roomError || !room) {
         console.error('Error verifying chat room:', roomError);
         throw new Error('Chat room not found or you do not have access');
-      }
-
-      const currentUser = await supabase.auth.getUser();
-      if (!currentUser.data.user) {
-        throw new Error('Not authenticated');
       }
 
       const { data, error } = await supabase
