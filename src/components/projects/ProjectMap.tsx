@@ -11,16 +11,17 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProjectMapProps {
   onLocationSelect: (location: ProjectLocation) => void;
   initialLocation?: ProjectLocation;
+  readOnly?: boolean;
 }
 
-const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
+const ProjectMap = ({ onLocationSelect, initialLocation, readOnly = false }: ProjectMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState(initialLocation?.address || '');
   const { mapInstance, markerRef, isMapReady, clickListenerRef } = useMapInstance(mapContainer, initialLocation);
 
   // Handle map click events
   useEffect(() => {
-    if (!mapInstance.current || !isMapReady) return;
+    if (!mapInstance.current || !isMapReady || readOnly) return;
 
     const handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
@@ -59,10 +60,10 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
         mapInstance.current.off('click', clickListenerRef.current);
       }
     };
-  }, [isMapReady, onLocationSelect]);
+  }, [isMapReady, onLocationSelect, readOnly]);
 
   const handleAddressSearch = async () => {
-    if (!address || !mapInstance.current) return;
+    if (!address || !mapInstance.current || readOnly) return;
 
     try {
       // Get the Mapbox token from our Edge Function
@@ -97,17 +98,19 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Input
-          placeholder="Search address..."
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
-        />
-        <Button onClick={handleAddressSearch} type="button">
-          <MapPin className="h-4 w-4" />
-        </Button>
-      </div>
+      {!readOnly && (
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search address..."
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddressSearch()}
+          />
+          <Button onClick={handleAddressSearch} type="button">
+            <MapPin className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
       <div ref={mapContainer} className="h-[300px] rounded-lg overflow-hidden" />
     </div>
   );

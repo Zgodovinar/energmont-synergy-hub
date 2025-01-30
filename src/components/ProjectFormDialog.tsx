@@ -16,10 +16,11 @@ interface ProjectFormDialogProps {
   project?: Project;
   onSave: (data: CreateProjectInput) => void;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-const ProjectFormDialog = ({ project, onSave, trigger }: ProjectFormDialogProps) => {
-  const [open, setOpen] = useState(false);
+const ProjectFormDialog = ({ project, onSave, trigger, open, onOpenChange }: ProjectFormDialogProps) => {
   const [formData, setFormData] = useState<CreateProjectInput>({
     name: project?.name || "",
     description: project?.description || "",
@@ -64,23 +65,13 @@ const ProjectFormDialog = ({ project, onSave, trigger }: ProjectFormDialogProps)
       return;
     }
     onSave({ ...formData, images });
-    setOpen(false);
-    setFormData({ 
-      name: "", 
-      description: "", 
-      startDate: "",
-      deadline: "", 
-      cost: "", 
-      profit: "", 
-      status: "pending",
-      notes: "",
-      assignedWorkerIds: [],
-    });
-    setImages([]);
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {trigger || <Button>Add Project</Button>}
       </DialogTrigger>
@@ -129,7 +120,7 @@ const ProjectFormDialog = ({ project, onSave, trigger }: ProjectFormDialogProps)
             </div>
 
             <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange?.(false)}>
                 Cancel
               </Button>
               <Button type="submit">Save</Button>

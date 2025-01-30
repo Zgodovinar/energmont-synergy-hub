@@ -1,6 +1,7 @@
 import { Project } from "@/types/project";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import ProjectMap from "../ProjectMap";
 
 interface ProjectDetailsProps {
   project: Project;
@@ -22,7 +23,7 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
 
   return (
     <Card className="p-6">
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div>
           <h3 className="text-sm font-medium text-gray-500">Status</h3>
           <Badge className={getStatusColor(project.status)}>
@@ -58,6 +59,19 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
           <div>
             <h3 className="text-sm font-medium text-gray-500">Notes</h3>
             <p className="mt-1 whitespace-pre-wrap">{project.notes}</p>
+          </div>
+        )}
+
+        {project.location && (
+          <div>
+            <h3 className="text-sm font-medium text-gray-500">Location</h3>
+            <div className="mt-2 h-[300px]">
+              <ProjectMap
+                initialLocation={project.location}
+                onLocationSelect={() => {}}
+                readOnly
+              />
+            </div>
           </div>
         )}
       </div>
