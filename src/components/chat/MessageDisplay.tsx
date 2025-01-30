@@ -1,5 +1,5 @@
 import { ChatMessage } from "@/types/chat";
-import { UserRound, Paperclip } from "lucide-react";
+import { UserRound, Paperclip, FolderUp, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
