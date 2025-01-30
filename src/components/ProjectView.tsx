@@ -10,6 +10,7 @@ import ProjectImages from "./projects/view/ProjectImages";
 import ProjectFormDialog from "./ProjectFormDialog";
 import { useState } from "react";
 import { useProjects } from "@/hooks/useProjects";
+import { useToast } from "./ui/use-toast";
 
 interface ProjectViewProps {
   project: Project;
@@ -19,10 +20,23 @@ interface ProjectViewProps {
 const ProjectView = ({ project, onClose }: ProjectViewProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { updateProject } = useProjects();
+  const { toast } = useToast();
 
   const handleEdit = async (data: any) => {
-    await updateProject({ id: project.id, ...data });
-    setShowEditDialog(false);
+    try {
+      await updateProject({ id: project.id, ...data });
+      setShowEditDialog(false);
+      toast({
+        title: "Success",
+        description: "Project updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update project",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -75,9 +89,9 @@ const ProjectView = ({ project, onClose }: ProjectViewProps) => {
         <ProjectFormDialog
           project={project}
           onSave={handleEdit}
-          trigger={<div />}
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
+          trigger={<div />}
         />
       )}
     </>

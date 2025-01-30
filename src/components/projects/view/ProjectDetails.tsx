@@ -65,6 +65,7 @@ const ProjectDetails = ({ project }: ProjectDetailsProps) => {
         {project.location && (
           <div>
             <h3 className="text-sm font-medium text-gray-500">Location</h3>
+            <p className="mt-1 mb-2 text-gray-700">{project.location.address}</p>
             <div className="mt-2 h-[300px]">
               <ProjectMap
                 initialLocation={project.location}
