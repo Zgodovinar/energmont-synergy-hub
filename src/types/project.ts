@@ -16,6 +16,11 @@ export interface Project {
   notes?: string;
   assignedWorkers: AssignedWorker[];
   images: string[];
+  location?: {
+    lat: number;
+    lng: number;
+    address?: string;
+  };
 }
 
 export interface CreateProjectInput {
@@ -28,4 +33,10 @@ export interface CreateProjectInput {
   profit?: string;
   notes?: string;
   images?: string[];
+  location?: {
+    lat: number;
+    lng: number;
+    address?: string;
+  };
+  assignedWorkerIds?: string[];
 }
