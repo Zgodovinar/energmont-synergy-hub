@@ -1,10 +1,11 @@
 export type NotificationSource = 'chat' | 'calendar' | 'project';
 
 export interface Notification {
-  id: number;
+  id: string;
   title: string;
   message: string;
   source: NotificationSource;
-  timestamp: string;
+  recipient_id?: string;
   read: boolean;
+  created_at: string;
 }
