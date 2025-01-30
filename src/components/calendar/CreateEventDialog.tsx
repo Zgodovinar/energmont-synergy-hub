@@ -24,7 +24,6 @@ interface CreateEventDialogProps {
 export function CreateEventDialog({ isOpen, onClose, startTime, endTime }: CreateEventDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,7 +36,6 @@ export function CreateEventDialog({ isOpen, onClose, startTime, endTime }: Creat
           {
             title,
             description,
-            location,
             start_time: startTime.toISOString(),
             end_time: endTime.toISOString(),
           },
@@ -55,7 +53,6 @@ export function CreateEventDialog({ isOpen, onClose, startTime, endTime }: Creat
       onClose();
       setTitle("");
       setDescription("");
-      setLocation("");
     } catch (error) {
       console.error("Error creating event:", error);
       toast({
@@ -93,28 +90,35 @@ export function CreateEventDialog({ isOpen, onClose, startTime, endTime }: Creat
                 placeholder="Event description"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Event location"
-              />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Time</Label>
                 <Input
-                  value={format(startTime, "PPp")}
-                  disabled
+                  type="datetime-local"
+                  value={format(startTime, "yyyy-MM-dd'T'HH:mm")}
+                  onChange={(e) => {
+                    const newDate = new Date(e.target.value);
+                    startTime.setFullYear(newDate.getFullYear());
+                    startTime.setMonth(newDate.getMonth());
+                    startTime.setDate(newDate.getDate());
+                    startTime.setHours(newDate.getHours());
+                    startTime.setMinutes(newDate.getMinutes());
+                  }}
                 />
               </div>
               <div className="space-y-2">
                 <Label>End Time</Label>
                 <Input
-                  value={format(endTime, "PPp")}
-                  disabled
+                  type="datetime-local"
+                  value={format(endTime, "yyyy-MM-dd'T'HH:mm")}
+                  onChange={(e) => {
+                    const newDate = new Date(e.target.value);
+                    endTime.setFullYear(newDate.getFullYear());
+                    endTime.setMonth(newDate.getMonth());
+                    endTime.setDate(newDate.getDate());
+                    endTime.setHours(newDate.getHours());
+                    endTime.setMinutes(newDate.getMinutes());
+                  }}
                 />
               </div>
             </div>

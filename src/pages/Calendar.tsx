@@ -8,13 +8,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CreateEventDialog } from "@/components/calendar/CreateEventDialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const CalendarPage = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const [selectedTimes, setSelectedTimes] = useState<{
     start: Date;
     end: Date;
-  } | null>(null);
+  }>({
+    start: new Date(),
+    end: new Date(new Date().setHours(new Date().getHours() + 1))
+  });
 
   // Fetch calendar events from Supabase
   const { data: events, isLoading } = useQuery({
@@ -32,19 +37,10 @@ const CalendarPage = () => {
         start: event.start_time,
         end: event.end_time,
         description: event.description,
-        location: event.location,
+        allDay: false,
       }));
     },
   });
-
-  const handleDateSelect = (selectInfo: any) => {
-    console.log("Date selected:", selectInfo);
-    setSelectedTimes({
-      start: selectInfo.start,
-      end: selectInfo.end,
-    });
-    setIsCreateEventOpen(true);
-  };
 
   const handleEventClick = (clickInfo: any) => {
     console.log("Event clicked:", clickInfo.event);
@@ -55,7 +51,16 @@ const CalendarPage = () => {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 ml-64 p-8">
-        <h1 className="text-3xl font-bold mb-8">Calendar</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Calendar</h1>
+          <Button 
+            onClick={() => setIsCreateEventOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Event
+          </Button>
+        </div>
         
         <Card>
           <CardContent className="p-6">
@@ -69,12 +74,11 @@ const CalendarPage = () => {
                 }}
                 initialView="dayGridMonth"
                 editable={true}
-                selectable={true}
+                selectable={false}
                 selectMirror={true}
                 dayMaxEvents={true}
                 weekends={true}
                 events={events || []}
-                select={handleDateSelect}
                 eventClick={handleEventClick}
                 eventContent={(eventInfo) => (
                   <div className="p-1">
@@ -82,11 +86,6 @@ const CalendarPage = () => {
                     {eventInfo.event.extendedProps.description && (
                       <div className="text-xs text-gray-600">
                         {eventInfo.event.extendedProps.description}
-                      </div>
-                    )}
-                    {eventInfo.event.extendedProps.location && (
-                      <div className="text-xs text-gray-500">
-                        📍 {eventInfo.event.extendedProps.location}
                       </div>
                     )}
                   </div>
@@ -102,17 +101,12 @@ const CalendarPage = () => {
           </CardContent>
         </Card>
 
-        {selectedTimes && (
-          <CreateEventDialog
-            isOpen={isCreateEventOpen}
-            onClose={() => {
-              setIsCreateEventOpen(false);
-              setSelectedTimes(null);
-            }}
-            startTime={selectedTimes.start}
-            endTime={selectedTimes.end}
-          />
-        )}
+        <CreateEventDialog
+          isOpen={isCreateEventOpen}
+          onClose={() => setIsCreateEventOpen(false)}
+          startTime={selectedTimes.start}
+          endTime={selectedTimes.end}
+        />
       </main>
     </div>
   );
