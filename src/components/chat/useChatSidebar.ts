@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChatRoom, ChatUser } from "@/types/chat";
+import { ChatRoom, ChatUser, ChatParticipant } from "@/types/chat";
 
 const initialUsers: ChatUser[] = [
   { 
@@ -35,7 +35,7 @@ export const useChatSidebar = (rooms: ChatRoom[], onRoomSelect: (room: ChatRoom)
     : [...rooms, ...initialUsers.filter(user => 
         !rooms.some(room => 
           room.type === 'direct' && 
-          room.participants.includes(user.id)
+          room.participants.some(p => p.id === user.id)
         )
       )];
 
@@ -43,7 +43,7 @@ export const useChatSidebar = (rooms: ChatRoom[], onRoomSelect: (room: ChatRoom)
     const existingRoom = rooms.find(
       room => room.type === 'direct' && 
       room.participants.length === 2 && 
-      room.participants.includes(user.id)
+      room.participants.some(p => p.id === user.id)
     );
 
     if (existingRoom) {
@@ -51,11 +51,23 @@ export const useChatSidebar = (rooms: ChatRoom[], onRoomSelect: (room: ChatRoom)
       return;
     }
 
+    const currentUser: ChatParticipant = {
+      id: 'c1c3d45e-6789-4abc-def0-123456789abc',
+      name: 'Current User'
+    };
+
+    const selectedUser: ChatParticipant = {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      status: user.status
+    };
+
     const newRoom: ChatRoom = {
       id: crypto.randomUUID(),
       name: user.name,
       type: 'direct',
-      participants: ['c1c3d45e-6789-4abc-def0-123456789abc', user.id],
+      participants: [currentUser, selectedUser],
       lastMessageTime: new Date(),
       userInfo: {
         isOnline: user.isOnline,

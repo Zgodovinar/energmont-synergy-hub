@@ -10,6 +10,13 @@ export interface ChatUser extends ChatParticipant {
   isOnline?: boolean;
 }
 
+export interface ChatMessage {
+  id: string;
+  content: string;
+  timestamp: string;
+  sender: ChatParticipant;
+}
+
 export interface Message {
   id: string;
   content: string;
