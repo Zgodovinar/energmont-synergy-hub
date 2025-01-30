@@ -6,6 +6,7 @@ import { ProjectLocation } from '@/types/project';
 import { useMapInstance } from '@/hooks/useMapInstance';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProjectMapProps {
   onLocationSelect: (location: ProjectLocation) => void;
@@ -21,7 +22,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   useEffect(() => {
     if (!mapInstance.current || !isMapReady) return;
 
-    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+    const handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
       
       if (markerRef.current) {
@@ -32,19 +33,22 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
           .addTo(mapInstance.current!);
       }
 
-      // Reverse geocoding
-      fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${process.env.VITE_MAPBOX_TOKEN}`
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          const placeName = data.features[0]?.place_name || '';
-          setAddress(placeName);
-          onLocationSelect({ lat, lng, address: placeName });
-        })
-        .catch((error) => {
-          console.error('Error fetching address:', error);
-        });
+      try {
+        // Get the Mapbox token from our Edge Function
+        const { data: { token }, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
+        if (tokenError) throw tokenError;
+
+        // Reverse geocoding
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${token}`
+        );
+        const data = await response.json();
+        const placeName = data.features[0]?.place_name || '';
+        setAddress(placeName);
+        onLocationSelect({ lat, lng, address: placeName });
+      } catch (error) {
+        console.error('Error fetching address:', error);
+      }
     };
 
     clickListenerRef.current = handleMapClick;
@@ -57,35 +61,38 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
     };
   }, [isMapReady, onLocationSelect]);
 
-  const handleAddressSearch = () => {
+  const handleAddressSearch = async () => {
     if (!address || !mapInstance.current) return;
 
-    fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${process.env.VITE_MAPBOX_TOKEN}`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        const [lng, lat] = data.features[0]?.center || [0, 0];
-        
-        mapInstance.current?.flyTo({
-          center: [lng, lat],
-          zoom: 14,
-          essential: true
-        });
+    try {
+      // Get the Mapbox token from our Edge Function
+      const { data: { token }, error: tokenError } = await supabase.functions.invoke('get-mapbox-token');
+      if (tokenError) throw tokenError;
 
-        if (markerRef.current) {
-          markerRef.current.setLngLat([lng, lat]);
-        } else {
-          markerRef.current = new mapboxgl.Marker()
-            .setLngLat([lng, lat])
-            .addTo(mapInstance.current!);
-        }
-
-        onLocationSelect({ lat, lng, address });
-      })
-      .catch((error) => {
-        console.error('Error searching address:', error);
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${token}`
+      );
+      const data = await response.json();
+      const [lng, lat] = data.features[0]?.center || [0, 0];
+      
+      mapInstance.current?.flyTo({
+        center: [lng, lat],
+        zoom: 14,
+        essential: true
       });
+
+      if (markerRef.current) {
+        markerRef.current.setLngLat([lng, lat]);
+      } else {
+        markerRef.current = new mapboxgl.Marker()
+          .setLngLat([lng, lat])
+          .addTo(mapInstance.current!);
+      }
+
+      onLocationSelect({ lat, lng, address });
+    } catch (error) {
+      console.error('Error searching address:', error);
+    }
   };
 
   return (
