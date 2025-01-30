@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
 
 interface ProjectMapProps {
@@ -34,14 +34,12 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Add initial marker if location exists
     if (initialLocation) {
       marker.current = new mapboxgl.Marker()
         .setLngLat([initialLocation.lng, initialLocation.lat])
         .addTo(map.current);
     }
 
-    // Click handler for setting location
     map.current.on('click', (e) => {
       const { lng, lat } = e.lngLat;
       
@@ -53,7 +51,6 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
           .addTo(map.current!);
       }
 
-      // Reverse geocoding to get address
       fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`)
         .then(response => response.json())
         .then(data => {
