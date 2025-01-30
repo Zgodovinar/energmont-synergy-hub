@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ChatUserItem from "./chat/ChatUserItem";
 import { ChatUser } from "@/types/chat";
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatSidebarProps {
   selectedRoomId?: string;
@@ -20,6 +21,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddChatOpen, setIsAddChatOpen] = useState(false);
   const { chatRooms, isLoadingRooms, createRoom } = useChat();
+  const { toast } = useToast();
 
   const { data: workers = [], isLoading: isLoadingWorkers } = useQuery({
     queryKey: ['workers'],
@@ -42,25 +44,45 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
   });
 
   const handleUserSelect = async (user: ChatUser) => {
-    // Check if a direct chat already exists with this user
-    const existingRoom = chatRooms.find(
-      room => room.type === 'direct' && 
-      room.participants.some(p => p.id === user.id)
-    );
+    try {
+      // Check if a direct chat already exists with this user
+      const existingRoom = chatRooms.find(
+        room => room.type === 'direct' && 
+        room.participants.some(p => p.id === user.id)
+      );
 
-    if (existingRoom) {
-      onRoomSelect(existingRoom.id);
-      return;
+      if (existingRoom) {
+        onRoomSelect(existingRoom.id);
+        return;
+      }
+
+      // Create a new direct chat room
+      const currentUser = await supabase.auth.getUser();
+      if (!currentUser.data.user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to start a chat",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const newRoom = await createRoom({
+        name: user.name,
+        participantIds: [user.id, currentUser.data.user.id]
+      });
+
+      if (newRoom) {
+        onRoomSelect(newRoom.id);
+      }
+    } catch (error) {
+      console.error('Error creating chat room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create chat room",
+        variant: "destructive"
+      });
     }
-
-    // Create a new direct chat room
-    const currentUser = await supabase.auth.getUser();
-    if (!currentUser.data.user) return;
-
-    createRoom({
-      name: user.name,
-      participantIds: [user.id, currentUser.data.user.id]
-    });
   };
 
   const filteredItems = searchQuery

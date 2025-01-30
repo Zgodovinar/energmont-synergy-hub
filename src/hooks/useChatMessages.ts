@@ -49,15 +49,26 @@ export const useChatMessages = (roomId?: string) => {
     mutationFn: async ({ roomId, content }: { roomId: string; content: string }) => {
       console.log('Sending message:', { roomId, content });
       
-      // First verify that the room exists
+      // First verify that the room exists and the current user is a participant
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
-        .select('id')
+        .select(`
+          id,
+          chat_room_participants!inner (
+            worker_id
+          )
+        `)
         .eq('id', roomId)
-        .single();
+        .maybeSingle();
 
       if (roomError || !room) {
-        throw new Error('Chat room not found');
+        console.error('Error verifying chat room:', roomError);
+        throw new Error('Chat room not found or you do not have access');
+      }
+
+      const currentUser = await supabase.auth.getUser();
+      if (!currentUser.data.user) {
+        throw new Error('Not authenticated');
       }
 
       const { data, error } = await supabase
@@ -65,7 +76,7 @@ export const useChatMessages = (roomId?: string) => {
         .insert({
           room_id: roomId,
           content,
-          sender_id: (await supabase.auth.getUser()).data.user?.id
+          sender_id: currentUser.data.user.id
         })
         .select()
         .single();
@@ -84,7 +95,7 @@ export const useChatMessages = (roomId?: string) => {
       console.error('Error in sendMessage mutation:', error);
       toast({
         title: "Error",
-        description: "Failed to send message",
+        description: error instanceof Error ? error.message : "Failed to send message",
         variant: "destructive"
       });
     }

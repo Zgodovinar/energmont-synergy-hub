@@ -46,7 +46,7 @@ export const useChatRooms = () => {
       // First create the chat room
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
-        .insert({ name, type: 'direct' })
+        .insert({ name, type: participantIds.length === 2 ? 'direct' : 'group' })
         .select()
         .single();
 
@@ -67,6 +67,8 @@ export const useChatRooms = () => {
 
       if (participantsError) {
         console.error('Error adding participants:', participantsError);
+        // Clean up the created room since we couldn't add participants
+        await supabase.from('chat_rooms').delete().eq('id', room.id);
         throw participantsError;
       }
 
@@ -92,6 +94,6 @@ export const useChatRooms = () => {
   return {
     chatRooms,
     isLoadingRooms,
-    createRoom: createRoomMutation.mutate
+    createRoom: createRoomMutation.mutateAsync // Changed to mutateAsync to return the promise
   };
 };
