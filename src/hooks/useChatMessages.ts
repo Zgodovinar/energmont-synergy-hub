@@ -54,11 +54,25 @@ export const useChatMessages = (roomId?: string) => {
         throw new Error('Not authenticated');
       }
 
-      // Get the worker record directly
+      // First check if user is admin
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.data.user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error checking user role:', profileError);
+        throw new Error('Could not verify user role');
+      }
+
+      const isAdmin = profile.role === 'admin';
+
+      // Get the worker record
       const { data: worker, error: workerError } = await supabase
         .from('workers')
         .select('id')
-        .eq('id', 'dbc6b117-ad75-443b-80a8-01efc85ea6c3')  // Your worker ID
+        .eq('email', currentUser.data.user.email)
         .maybeSingle();
 
       if (workerError || !worker) {
@@ -66,23 +80,26 @@ export const useChatMessages = (roomId?: string) => {
         throw new Error('Worker record not found. Please make sure you have a worker profile.');
       }
 
-      // Then verify that the room exists and the current worker is a participant
-      const { data: room, error: roomError } = await supabase
-        .from('chat_room_participants')
-        .select(`
-          room_id,
-          chat_rooms!inner (
-            id,
-            name
-          )
-        `)
-        .eq('room_id', roomId)
-        .eq('worker_id', worker.id)
-        .maybeSingle();
+      // If user is admin, skip participant check
+      if (!isAdmin) {
+        // Verify that the room exists and the current worker is a participant
+        const { data: room, error: roomError } = await supabase
+          .from('chat_room_participants')
+          .select(`
+            room_id,
+            chat_rooms!inner (
+              id,
+              name
+            )
+          `)
+          .eq('room_id', roomId)
+          .eq('worker_id', worker.id)
+          .maybeSingle();
 
-      if (roomError || !room) {
-        console.error('Error verifying chat room:', roomError);
-        throw new Error('Chat room not found or you do not have access');
+        if (roomError || !room) {
+          console.error('Error verifying chat room:', roomError);
+          throw new Error('Chat room not found or you do not have access');
+        }
       }
 
       const { data, error } = await supabase
