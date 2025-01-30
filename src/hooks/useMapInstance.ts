@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { ProjectLocation } from '@/types/project';
 
-// Set the access token
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+// Set the access token from environment variable
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 export const useMapInstance = (
   containerRef: React.RefObject<HTMLDivElement>,
