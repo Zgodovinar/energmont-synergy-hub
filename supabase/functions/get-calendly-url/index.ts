@@ -12,15 +12,23 @@ serve(async (req) => {
   }
 
   try {
-    // Here we'll call your Calendly wrapper extension
-    const response = await fetch('http://localhost:54321/functions/v1/calendly-wrapper', {
+    // Call the Calendly wrapper using the Supabase project URL
+    const response = await fetch('https://sqqboxzharzedgqdljfp.supabase.co/functions/v1/calendly-wrapper', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
       },
     })
 
+    if (!response.ok) {
+      throw new Error(`Calendly wrapper responded with status: ${response.status}`);
+    }
+
     const data = await response.json()
+
+    if (!data?.calendly_url) {
+      throw new Error('No Calendly URL found in response');
+    }
 
     return new Response(
       JSON.stringify({ calendly_url: data.calendly_url }),
@@ -34,7 +42,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to fetch Calendly URL' }),
+      JSON.stringify({ 
+        error: 'Failed to fetch Calendly URL',
+        details: error.message 
+      }),
       { 
         status: 500,
         headers: { 
