@@ -12,26 +12,14 @@ serve(async (req) => {
   }
 
   try {
-    // Call the Calendly wrapper using the Supabase project URL
-    const response = await fetch('https://sqqboxzharzedgqdljfp.supabase.co/functions/v1/calendly-wrapper', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Calendly wrapper responded with status: ${response.status}`);
-    }
-
-    const data = await response.json()
-
-    if (!data?.calendly_url) {
-      throw new Error('No Calendly URL found in response');
-    }
+    // For now, return a hardcoded Calendly URL for testing
+    // Replace this with your actual Calendly URL
+    const calendlyUrl = "https://calendly.com/svaljzgodovina";
+    
+    console.log('Returning Calendly URL:', calendlyUrl);
 
     return new Response(
-      JSON.stringify({ calendly_url: data.calendly_url }),
+      JSON.stringify({ calendly_url: calendlyUrl }),
       { 
         headers: { 
           ...corsHeaders,
