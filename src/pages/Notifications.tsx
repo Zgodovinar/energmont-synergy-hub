@@ -1,27 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Bell, Calendar, MessageSquare, Trash2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Notification, NotificationSource } from "@/types/notification";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
-
-const getSourceIcon = (source: NotificationSource) => {
-  switch (source) {
-    case 'chat':
-      return <MessageSquare className="h-5 w-5" />;
-    case 'calendar':
-      return <Calendar className="h-5 w-5" />;
-    case 'project':
-      return <Bell className="h-5 w-5" />;
-    default:
-      return <Bell className="h-5 w-5" />;
-  }
-};
+import NotificationList from "@/components/notifications/NotificationList";
 
 const Notifications = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,7 +21,6 @@ const Notifications = () => {
     queryFn: async () => {
       if (!session?.user?.id) return [];
 
-      // First get the worker record for the current user
       const { data: worker, error: workerError } = await supabase
         .from('workers')
         .select('id')
@@ -108,34 +93,6 @@ const Notifications = () => {
     },
   });
 
-  // Setup real-time subscription
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    const channel = supabase
-      .channel('notifications-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, session?.user?.id]);
-
-  const handleDeleteNotification = (id: string) => {
-    deleteMutation.mutate(id);
-  };
-
   const filteredNotifications = notifications.filter(notification =>
     notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     notification.message.toLowerCase().includes(searchQuery.toLowerCase())
@@ -163,47 +120,11 @@ const Notifications = () => {
               Loading notifications...
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredNotifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`flex items-start justify-between p-4 rounded-lg ${
-                    notification.read ? 'bg-gray-50' : 'bg-blue-50'
-                  }`}
-                  onClick={() => markAsReadMutation.mutate(notification.id)}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`p-2 rounded-full ${
-                      notification.read ? 'bg-gray-100' : 'bg-blue-100'
-                    }`}>
-                      {getSourceIcon(notification.source)}
-                    </div>
-                    <div>
-                      <h3 className="font-medium">{notification.title}</h3>
-                      <p className="text-sm text-gray-600">{notification.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {notification.created_at && new Date(notification.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteNotification(notification.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              {filteredNotifications.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No notifications found
-                </div>
-              )}
-            </div>
+            <NotificationList
+              notifications={filteredNotifications}
+              onDelete={(id) => deleteMutation.mutate(id)}
+              onRead={(id) => markAsReadMutation.mutate(id)}
+            />
           )}
         </Card>
       </main>
