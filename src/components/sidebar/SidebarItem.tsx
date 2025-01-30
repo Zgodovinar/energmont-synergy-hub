@@ -17,16 +17,16 @@ export const SidebarItem = memo(({
   isActive
 }: SidebarItemProps) => {
   return (
-    <Link to={href} className="block w-full">
-      <Button
-        variant={isActive ? "secondary" : "ghost"}
-        className="w-full justify-start px-4 transition-none"
-        type="button"
-      >
+    <Button
+      variant={isActive ? "secondary" : "ghost"}
+      className="w-full justify-start px-4"
+      asChild
+    >
+      <Link to={href}>
         <Icon className="h-4 w-4 shrink-0" />
         <span className="ml-2 truncate">{title}</span>
-      </Button>
-    </Link>
+      </Link>
+    </Button>
   );
 });
 
