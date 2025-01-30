@@ -66,9 +66,10 @@ export const messageService = {
         .eq('source', 'chat')
         .eq('read', false)
         .ilike('title', `New message from ${sender.name}%`)
-        .single();
+        .maybeSingle(); // Changed from single() to maybeSingle()
 
-      if (notifError && notifError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      // Only throw error if it's not a "no rows returned" error
+      if (notifError && notifError.code !== 'PGRST116') {
         throw notifError;
       }
 
