@@ -4,10 +4,11 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
+import { ProjectLocation } from '@/types/project';
 
 interface ProjectMapProps {
-  onLocationSelect: (location: { lat: number; lng: number; address?: string }) => void;
-  initialLocation?: { lat: number; lng: number; address?: string };
+  onLocationSelect: (location: ProjectLocation) => void;
+  initialLocation?: ProjectLocation;
 }
 
 const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {

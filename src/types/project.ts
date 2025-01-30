@@ -4,6 +4,12 @@ interface AssignedWorker {
   avatar: string;
 }
 
+export type ProjectLocation = {
+  lat: number;
+  lng: number;
+  address?: string;
+};
+
 export interface Project {
   id: string;
   name: string;
@@ -16,11 +22,7 @@ export interface Project {
   notes?: string;
   assignedWorkers: AssignedWorker[];
   images: string[];
-  location?: {
-    lat: number;
-    lng: number;
-    address?: string;
-  };
+  location?: ProjectLocation;
 }
 
 export interface CreateProjectInput {
@@ -33,10 +35,6 @@ export interface CreateProjectInput {
   profit?: string;
   notes?: string;
   images?: string[];
-  location?: {
-    lat: number;
-    lng: number;
-    address?: string;
-  };
+  location?: ProjectLocation;
   assignedWorkerIds?: string[];
 }
