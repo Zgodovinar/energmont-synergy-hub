@@ -1,92 +1,135 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Calendar } from "@/components/ui/calendar";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { addDays, format, setHours, setMinutes } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+// Mock data for events - replace with real data from your backend
+const mockEvents = [
+  {
+    id: 1,
+    title: "Team Meeting",
+    date: new Date(2024, 3, 15, 10, 0),
+    type: "meeting",
+  },
+  {
+    id: 2,
+    title: "Project Review",
+    date: new Date(2024, 3, 15, 14, 30),
+    type: "review",
+  },
+  // Add more mock events as needed
+];
 
 const CalendarPage = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedTime, setSelectedTime] = useState<string>();
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
-  // Generate available time slots for the selected date
-  const getTimeSlots = () => {
-    if (!date) return [];
-    
-    const slots = [];
-    let currentTime = setHours(setMinutes(date, 0), 9); // Start at 9 AM
-    const endTime = setHours(setMinutes(date, 0), 17); // End at 5 PM
-
-    while (currentTime <= endTime) {
-      slots.push(format(currentTime, "h:mm a"));
-      currentTime = addDays(currentTime, 0);
-      currentTime.setMinutes(currentTime.getMinutes() + 30); // 30-minute slots
+  const handleDateSelect = (newDate: Date | undefined) => {
+    setDate(newDate);
+    if (newDate) {
+      setSelectedDate(newDate);
     }
-
-    return slots;
   };
 
-  const handleSchedule = () => {
-    if (!date || !selectedTime) return;
-    
-    console.log("Scheduled meeting for:", format(date, "PPP"), "at", selectedTime);
-    // Here you would typically make an API call to save the appointment
+  // Filter events for the selected date
+  const getDayEvents = () => {
+    return mockEvents.filter(
+      (event) => format(event.date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
+    );
+  };
+
+  // Generate time slots for the day
+  const getTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      for (let minute of [0, 30]) {
+        slots.push(
+          new Date(
+            selectedDate.getFullYear(),
+            selectedDate.getMonth(),
+            selectedDate.getDate(),
+            hour,
+            minute
+          )
+        );
+      }
+    }
+    return slots;
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 ml-64 p-8">
-        <h1 className="text-3xl font-bold mb-8">Schedule a Meeting</h1>
+        <h1 className="text-3xl font-bold mb-8">Calendar</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Select a Date</h2>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border"
-              disabled={(date) => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                return date < today || date.getDay() === 0 || date.getDay() === 6;
-              }}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          {/* Monthly Calendar */}
+          <Card className="md:col-span-5">
+            <CardHeader>
+              <CardTitle>Monthly View</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={handleDateSelect}
+                className="rounded-md border"
+              />
+            </CardContent>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Select a Time</h2>
-            {date ? (
-              <div className="space-y-4">
-                <p className="text-gray-600">
-                  Available times for {format(date, "PPPP")}:
-                </p>
-                <Select value={selectedTime} onValueChange={setSelectedTime}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getTimeSlots().map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Daily Schedule */}
+          <Card className="md:col-span-7">
+            <CardHeader>
+              <CardTitle>
+                Schedule for {format(selectedDate, "EEEE, MMMM do, yyyy")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[600px] w-full pr-4">
+                <div className="space-y-2">
+                  {getTimeSlots().map((timeSlot, index) => {
+                    const currentEvents = mockEvents.filter(
+                      (event) =>
+                        format(event.date, "yyyy-MM-dd HH:mm") ===
+                        format(timeSlot, "yyyy-MM-dd HH:mm")
+                    );
 
-                <Button 
-                  className="w-full mt-4" 
-                  disabled={!selectedTime}
-                  onClick={handleSchedule}
-                >
-                  Schedule Meeting
-                </Button>
-              </div>
-            ) : (
-              <p className="text-gray-500">Please select a date first</p>
-            )}
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="w-20 text-sm text-gray-500">
+                          {format(timeSlot, "h:mm a")}
+                        </div>
+                        <div className="flex-1 min-h-[2rem]">
+                          {currentEvents.map((event) => (
+                            <div
+                              key={event.id}
+                              className="mb-2 p-2 bg-white rounded-md border shadow-sm"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{event.title}</span>
+                                <Badge
+                                  variant={event.type === "meeting" ? "default" : "secondary"}
+                                >
+                                  {event.type}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </CardContent>
           </Card>
         </div>
       </main>
