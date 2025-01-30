@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { chatService } from "@/services/chatService";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { ChatRoom } from "@/types/chat";
 
 export const useChatRooms = () => {
@@ -43,23 +44,37 @@ export const useChatRooms = () => {
     mutationFn: async ({ name, participantIds }: { name: string, participantIds: string[] }) => {
       console.log('Creating chat room:', { name, participantIds });
       
-      // First create the chat room
+      const currentUser = await supabase.auth.getUser();
+      if (!currentUser.data.user) {
+        throw new Error('Not authenticated');
+      }
+
+      // Get or create admin worker record
+      const adminWorkerId = await chatService.getOrCreateAdminWorker(currentUser.data.user.email!);
+
+      // Create chat room
       const { data: room, error: roomError } = await supabase
         .from('chat_rooms')
-        .insert({ name, type: participantIds.length === 2 ? 'direct' : 'group' })
+        .insert({ 
+          name, 
+          type: participantIds.length === 1 ? 'direct' : 'group' 
+        })
         .select()
         .single();
 
       if (roomError) {
         console.error('Error creating chat room:', roomError);
-        throw roomError;
+        throw new Error('Failed to create chat room');
       }
 
-      // Then add participants
-      const participants = participantIds.map(workerId => ({
-        room_id: room.id,
-        worker_id: workerId
-      }));
+      // Add participants including admin
+      const participants = [
+        { room_id: room.id, worker_id: adminWorkerId },
+        ...participantIds.map(workerId => ({
+          room_id: room.id,
+          worker_id: workerId
+        }))
+      ];
 
       const { error: participantsError } = await supabase
         .from('chat_room_participants')
@@ -67,9 +82,9 @@ export const useChatRooms = () => {
 
       if (participantsError) {
         console.error('Error adding participants:', participantsError);
-        // Clean up the created room since we couldn't add participants
+        // Clean up the created room
         await supabase.from('chat_rooms').delete().eq('id', room.id);
-        throw participantsError;
+        throw new Error('Failed to add participants');
       }
 
       return room;
@@ -85,7 +100,7 @@ export const useChatRooms = () => {
       console.error('Error in createRoom mutation:', error);
       toast({
         title: "Error",
-        description: "Failed to create chat room",
+        description: error instanceof Error ? error.message : "Failed to create chat room",
         variant: "destructive"
       });
     }
@@ -94,6 +109,6 @@ export const useChatRooms = () => {
   return {
     chatRooms,
     isLoadingRooms,
-    createRoom: createRoomMutation.mutateAsync // Changed to mutateAsync to return the promise
+    createRoom: createRoomMutation.mutateAsync
   };
 };
