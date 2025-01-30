@@ -43,9 +43,10 @@ const Auth = () => {
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .single();
+        .eq('email', email)
+        .maybeSingle();
 
-      console.log('Profile data:', profileData);
+      console.log('Profile query result:', { profileData, profileError });
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
@@ -57,8 +58,18 @@ const Auth = () => {
         return;
       }
 
+      if (!profileData) {
+        console.error('No profile found for email:', email);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "User profile not found",
+        });
+        return;
+      }
+
       // Redirect based on role
-      if (profileData?.role === 'worker') {
+      if (profileData.role === 'worker') {
         console.log('Redirecting worker to chat');
         navigate("/chat");
       } else {
