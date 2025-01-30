@@ -34,7 +34,7 @@ const MessageDisplay = ({ message, onMoveToFiles, onDeleteFile, isLastMessage }:
             {message.file && (
               <div className="mt-2 flex items-center gap-2">
                 <a
-                  href={message.file.url}
+                  href={message.file.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-primary hover:underline"

@@ -13,8 +13,12 @@ export interface ChatUser extends ChatParticipant {
 export interface ChatFile {
   id: string;
   name: string;
-  url: string;
-  type: string;
+  file_url: string;  // Changed from url to file_url to match DB
+  file_type: string; // Changed from type to file_type to match DB
+  size?: number;
+  uploaded_by?: string;
+  created_at?: string;
+  saved_to_files?: boolean;
 }
 
 export interface ChatMessage {
