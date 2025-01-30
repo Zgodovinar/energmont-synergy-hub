@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Project } from "@/types/project";
+import { Project, CreateProjectInput } from "@/types/project";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { X, Edit } from "lucide-react";
@@ -15,16 +15,17 @@ import { useToast } from "./ui/use-toast";
 interface ProjectViewProps {
   project: Project;
   onClose: () => void;
+  onEdit: (data: CreateProjectInput) => Promise<void>;
 }
 
-const ProjectView = ({ project, onClose }: ProjectViewProps) => {
+const ProjectView = ({ project, onClose, onEdit }: ProjectViewProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { updateProject } = useProjects();
   const { toast } = useToast();
 
   const handleEdit = async (data: any) => {
     try {
-      await updateProject({ id: project.id, ...data });
+      await onEdit(data);
       setShowEditDialog(false);
       toast({
         title: "Success",
