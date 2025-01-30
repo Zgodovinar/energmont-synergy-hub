@@ -51,17 +51,17 @@ const CalendarPage = () => {
       <main className="flex-1 ml-64 p-8">
         <h1 className="text-3xl font-bold mb-8">Calendar</h1>
         
-        <div className="flex gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex flex-col gap-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm w-full">
             <Calendar
               mode="single"
               selected={date}
               onSelect={setDate}
-              className="rounded-md border"
+              className="rounded-md border mx-auto"
             />
           </div>
 
-          <div className="flex-1 bg-white p-6 rounded-lg shadow-sm">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">
                 Events for {date?.toLocaleDateString()}

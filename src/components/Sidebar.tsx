@@ -8,7 +8,8 @@ import {
   MessageSquare,
   FileText,
   Calendar,
-  Database
+  Database,
+  Bell
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -23,12 +24,13 @@ const Sidebar = () => {
     { icon: FileText, label: "Files", path: "/files" },
     { icon: Calendar, label: "Calendar", path: "/calendar" },
     { icon: Database, label: "Items", path: "/items" },
+    { icon: Bell, label: "Notifications", path: "/notifications" },
   ];
 
   return (
     <div className="h-screen bg-white border-r border-gray-200 fixed left-0 top-0 w-64 p-4">
       <div className="flex items-center mb-8 px-2">
-        <h1 className="text-2xl font-bold text-primary">Energmont.si</h1>
+        <img src="/lovable-uploads/005d9bc9-9de8-4430-b0cc-12d6bc393294.png" alt="Energmont" className="h-8" />
       </div>
       
       <nav className="space-y-2">
