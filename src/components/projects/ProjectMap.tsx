@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   const [address, setAddress] = useState(initialLocation?.address || '');
 
   // Initialize map when component mounts
-  useState(() => {
+  useEffect(() => {
     if (!mapContainer.current) return;
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiemdvZG92aW5hMSIsImEiOiJjbTZqcHgxNHQwMGxwMm9zZ3dmcWozcGdyIn0.LyyYbdFWwCgmVoV1miRv5Q';
@@ -78,7 +78,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
       }
       map.current?.remove();
     };
-  }, []);
+  }, []); // Empty dependency array since we only want to initialize once
 
   const handleAddressSearch = () => {
     if (!address || !map.current) return;
