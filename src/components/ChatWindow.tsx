@@ -1,78 +1,90 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef } from "react";
+import { ScrollArea } from "./ui/scroll-area";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 import { Send } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatRoom, Message } from "@/types/chat";
-import ChatMessage from "./chat/ChatMessage";
+import { useChat } from "@/hooks/useChat";
+import { ChatMessage } from "@/types/chat";
+import { useForm } from "react-hook-form";
 
 interface ChatWindowProps {
-  room?: ChatRoom;
-  messages: Message[];
-  onSendMessage: (content: string) => void;
+  roomId?: string;
 }
 
-const ChatWindow = ({ room, messages, onSendMessage }: ChatWindowProps) => {
-  const [newMessage, setNewMessage] = useState("");
-  const currentUserId = '1'; // Changed to string to match new types
+interface MessageForm {
+  message: string;
+}
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !room) return;
-    onSendMessage(newMessage);
-    setNewMessage("");
-  };
+const ChatWindow = ({ roomId }: ChatWindowProps) => {
+  const { messages, sendMessage } = useChat(roomId);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { register, handleSubmit, reset } = useForm<MessageForm>();
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
+  }, [messages]);
+
+  const onSubmit = (data: MessageForm) => {
+    if (!roomId || !data.message.trim()) return;
+    
+    sendMessage({ roomId, content: data.message });
+    reset();
   };
 
-  if (!room) {
+  if (!roomId) {
     return (
-      <Card className="flex flex-col h-[calc(100vh-12rem)] items-center justify-center text-gray-500">
-        <p>Select a chat to start messaging</p>
-      </Card>
+      <div className="flex-1 flex items-center justify-center text-gray-500">
+        Select a chat to start messaging
+      </div>
     );
   }
 
   return (
-    <Card className="flex flex-col h-[calc(100vh-12rem)]">
-      <div className="p-4 border-b">
-        <h2 className="text-lg font-semibold">{room.name}</h2>
-        <p className="text-sm text-gray-500">
-          {room.type === 'team' ? 'Team Chat' : 'Direct Message'}
-        </p>
-      </div>
-
-      <ScrollArea className="flex-1 p-4 messages-scroll-area">
+    <div className="flex-1 flex flex-col">
+      <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message) => (
-            <ChatMessage
+          {messages.map((message: ChatMessage) => (
+            <div
               key={message.id}
-              message={message}
-              isCurrentUser={message.senderId === currentUserId}
-            />
+              className="flex items-start gap-2.5"
+            >
+              <img
+                className="w-8 h-8 rounded-full"
+                src={message.sender.avatar || "/placeholder.svg"}
+                alt={message.sender.name}
+              />
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">
+                    {message.sender.name}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-700">{message.content}</p>
+              </div>
+            </div>
           ))}
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <Button onClick={handleSendMessage}>
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </Card>
+      <form 
+        onSubmit={handleSubmit(onSubmit)}
+        className="p-4 border-t flex gap-2"
+      >
+        <Input
+          {...register("message")}
+          placeholder="Type a message..."
+          className="flex-1"
+        />
+        <Button type="submit" size="icon">
+          <Send className="h-4 w-4" />
+        </Button>
+      </form>
+    </div>
   );
 };
 

@@ -1,93 +1,187 @@
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChatRoom, ChatUser, Message } from "@/types/chat";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { ChatMessage, ChatRoom } from "@/types/chat";
+import { useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
-export const useChat = () => {
+export const useChat = (roomId?: string) => {
   const queryClient = useQueryClient();
-  const [selectedRoom, setSelectedRoom] = useState<ChatRoom>();
+  const { toast } = useToast();
 
   // Fetch chat rooms
-  const { data: rooms = [] } = useQuery({
-    queryKey: ['chat-rooms'],
+  const { data: chatRooms = [], isLoading: isLoadingRooms } = useQuery({
+    queryKey: ['chatRooms'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      console.log('Fetching chat rooms...');
+      const { data: rooms, error } = await supabase
         .from('chat_rooms')
-        .select('*');
-      
-      if (error) throw error;
-      return data.map(room => ({
+        .select(`
+          *,
+          chat_room_participants (
+            worker:workers (
+              id,
+              name,
+              image_url,
+              status
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching chat rooms:', error);
+        throw error;
+      }
+
+      return rooms.map(room => ({
         id: room.id,
         name: room.name,
-        type: room.type as 'direct' | 'team',
-        participants: [],
-        lastMessageTime: room.created_at ? new Date(room.created_at) : undefined
+        type: room.type,
+        participants: room.chat_room_participants.map((p: any) => ({
+          id: p.worker.id,
+          name: p.worker.name,
+          avatar: p.worker.image_url,
+          status: p.worker.status
+        }))
       }));
     }
   });
 
-  // Fetch messages for selected room
-  const { data: messages = [] } = useQuery({
-    queryKey: ['chat-messages', selectedRoom?.id],
+  // Fetch messages for a specific room
+  const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
+    queryKey: ['chatMessages', roomId],
     queryFn: async () => {
-      if (!selectedRoom) return [];
+      if (!roomId) return [];
       
+      console.log('Fetching messages for room:', roomId);
       const { data, error } = await supabase
         .from('chat_messages')
-        .select('*')
-        .eq('room_id', selectedRoom.id)
+        .select(`
+          *,
+          sender:sender_id (
+            id,
+            name,
+            image_url
+          )
+        `)
+        .eq('room_id', roomId)
         .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      return data.map(msg => ({
-        id: msg.id,
-        senderId: msg.sender_id,
-        content: msg.content,
-        timestamp: new Date(msg.created_at),
-        roomId: msg.room_id
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
+
+      return data.map(message => ({
+        id: message.id,
+        content: message.content,
+        timestamp: new Date(message.created_at).toISOString(),
+        sender: {
+          id: message.sender.id,
+          name: message.sender.name,
+          avatar: message.sender.image_url
+        }
       }));
     },
-    enabled: !!selectedRoom
+    enabled: !!roomId
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async (newMessage: Omit<Message, 'id' | 'timestamp'>) => {
-      const { error } = await supabase
+    mutationFn: async ({ roomId, content }: { roomId: string; content: string }) => {
+      console.log('Sending message:', { roomId, content });
+      const { data, error } = await supabase
         .from('chat_messages')
         .insert({
-          content: newMessage.content,
-          room_id: newMessage.roomId,
-          sender_id: newMessage.senderId
-        });
-      
-      if (error) throw error;
+          room_id: roomId,
+          content,
+          sender_id: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
+
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['chatMessages', roomId] });
     },
     onError: () => {
-      toast.error("Failed to send message");
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive"
+      });
     }
   });
 
-  // Subscribe to real-time updates
+  // Create chat room mutation
+  const createRoomMutation = useMutation({
+    mutationFn: async ({ name, participantIds }: { name: string; participantIds: string[] }) => {
+      console.log('Creating chat room:', { name, participantIds });
+      const { data: room, error: roomError } = await supabase
+        .from('chat_rooms')
+        .insert({ name, type: participantIds.length > 1 ? 'group' : 'direct' })
+        .select()
+        .single();
+
+      if (roomError) throw roomError;
+
+      const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+      if (!currentUserId) throw new Error('No user logged in');
+
+      // Add all participants including the current user
+      const participants = [...new Set([...participantIds, currentUserId])];
+      
+      const { error: participantsError } = await supabase
+        .from('chat_room_participants')
+        .insert(
+          participants.map(workerId => ({
+            room_id: room.id,
+            worker_id: workerId
+          }))
+        );
+
+      if (participantsError) throw participantsError;
+
+      return room;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+      toast({
+        title: "Success",
+        description: "Chat room created successfully"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create chat room",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Set up real-time subscription for new messages
   useEffect(() => {
-    if (!selectedRoom) return;
+    if (!roomId) return;
 
     const channel = supabase
-      .channel('chat-updates')
+      .channel(`room:${roomId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: `room_id=eq.${selectedRoom.id}`
+          filter: `room_id=eq.${roomId}`
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
+          queryClient.invalidateQueries({ queryKey: ['chatMessages', roomId] });
         }
       )
       .subscribe();
@@ -95,23 +189,14 @@ export const useChat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedRoom, queryClient]);
-
-  const sendMessage = useCallback((content: string) => {
-    if (!selectedRoom) return;
-    
-    sendMessageMutation.mutate({
-      content,
-      roomId: selectedRoom.id,
-      senderId: '1' // TODO: Replace with actual user ID (now as string)
-    });
-  }, [selectedRoom, sendMessageMutation]);
+  }, [roomId, queryClient]);
 
   return {
-    rooms,
+    chatRooms,
     messages,
-    selectedRoom,
-    setSelectedRoom,
-    sendMessage
+    isLoadingRooms,
+    isLoadingMessages,
+    sendMessage: sendMessageMutation.mutate,
+    createRoom: createRoomMutation.mutate
   };
 };
