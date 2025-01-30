@@ -1,28 +1,12 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-interface Event {
-  id: string;
-  date: Date;
-  time: string;
-  notification: string;
-  note: string;
-}
+import { AddEventDialog } from "@/components/calendar/AddEventDialog";
+import { EventsList } from "@/components/calendar/EventsList";
 
 const CalendarPage = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -30,7 +14,6 @@ const CalendarPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch events for the current user
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['calendar_events', session?.user.id],
     queryFn: async () => {
@@ -50,8 +33,8 @@ const CalendarPage = () => {
       const eventData = {
         title: formData.get("notification") as string,
         description: formData.get("note") as string,
-        start_time: new Date(`${date?.toISOString().split('T')[0]}T${formData.get("time")}:00`),
-        end_time: new Date(`${date?.toISOString().split('T')[0]}T${formData.get("time")}:00`),
+        start_time: `${date?.toISOString().split('T')[0]}T${formData.get("time")}:00`,
+        end_time: `${date?.toISOString().split('T')[0]}T${formData.get("time")}:00`,
         created_by: session?.user.id
       };
 
@@ -79,12 +62,6 @@ const CalendarPage = () => {
       });
     }
   });
-
-  const handleAddEvent = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    addEventMutation.mutate(formData);
-  };
 
   if (isLoading) {
     return (
@@ -118,50 +95,10 @@ const CalendarPage = () => {
               <h2 className="text-xl font-semibold">
                 Events for {date?.toLocaleDateString()}
               </h2>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>Add Event</Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Event</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddEvent} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Time</label>
-                      <Input type="time" name="time" required />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Title</label>
-                      <Input type="text" name="notification" placeholder="Event title" required />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Description</label>
-                      <Textarea name="note" placeholder="Add event details..." />
-                    </div>
-                    <Button type="submit">Save Event</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+              <AddEventDialog onSubmit={(formData) => addEventMutation.mutate(formData)} />
             </div>
 
-            <div className="space-y-4">
-              {events
-                .filter((event) => new Date(event.start_time).toDateString() === date?.toDateString())
-                .map((event) => (
-                  <div key={event.id} className="border p-4 rounded-md">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                        <p className="text-sm text-gray-600">{event.title}</p>
-                      </div>
-                    </div>
-                    {event.description && (
-                      <p className="text-sm text-gray-500 mt-2">{event.description}</p>
-                    )}
-                  </div>
-                ))}
-            </div>
+            <EventsList events={events} selectedDate={date} />
           </div>
         </div>
       </main>
