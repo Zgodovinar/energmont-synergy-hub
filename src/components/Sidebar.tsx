@@ -1,55 +1,111 @@
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  Users, 
-  FolderKanban, 
-  BarChart3, 
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  LayoutDashboard,
+  Users,
+  FolderKanban,
+  BarChart2,
   MessageSquare,
-  FileText,
-  Calendar,
-  Database,
-  Bell
+  FolderOpen,
+  Calendar as CalendarIcon,
+  Package,
+  Bell,
+  LogOut,
 } from "lucide-react";
 
 const Sidebar = () => {
   const location = useLocation();
-  
+  const { isAdmin, signOut } = useAuth();
+
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: Users, label: "Workers", path: "/workers" },
-    { icon: FolderKanban, label: "Projects", path: "/projects" },
-    { icon: BarChart3, label: "Analytics", path: "/analytics" },
-    { icon: MessageSquare, label: "Chat", path: "/chat" },
-    { icon: FileText, label: "Files", path: "/files" },
-    { icon: Calendar, label: "Calendar", path: "/calendar" },
-    { icon: Database, label: "Items", path: "/items" },
-    { icon: Bell, label: "Notifications", path: "/notifications" },
+    {
+      href: "/",
+      icon: LayoutDashboard,
+      title: "Dashboard",
+    },
+    {
+      href: "/workers",
+      icon: Users,
+      title: "Workers",
+      adminOnly: true,
+    },
+    {
+      href: "/projects",
+      icon: FolderKanban,
+      title: "Projects",
+      adminOnly: true,
+    },
+    {
+      href: "/analytics",
+      icon: BarChart2,
+      title: "Analytics",
+      adminOnly: true,
+    },
+    {
+      href: "/chat",
+      icon: MessageSquare,
+      title: "Chat",
+    },
+    {
+      href: "/files",
+      icon: FolderOpen,
+      title: "Files",
+    },
+    {
+      href: "/calendar",
+      icon: CalendarIcon,
+      title: "Calendar",
+    },
+    {
+      href: "/items",
+      icon: Package,
+      title: "Items",
+    },
+    {
+      href: "/notifications",
+      icon: Bell,
+      title: "Notifications",
+    },
   ];
 
   return (
-    <div className="h-screen bg-white border-r border-gray-200 fixed left-0 top-0 w-64 p-4">
-      <div className="flex items-center mb-8 px-2">
-        <img src="/lovable-uploads/005d9bc9-9de8-4430-b0cc-12d6bc393294.png" alt="Energmont" className="h-8" />
-      </div>
-      
-      <nav className="space-y-2">
-        {menuItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors",
-              location.pathname === item.path 
-                ? "bg-primary text-white" 
-                : "text-gray-600 hover:bg-gray-100"
-            )}
-          >
-            <item.icon className="w-5 h-5" />
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
+    <div className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background">
+      <ScrollArea className="h-full">
+        <div className="space-y-4 py-4">
+          <div className="px-3 py-2">
+            <h2 className="mb-2 px-4 text-lg font-semibold">Dashboard</h2>
+            <div className="space-y-1">
+              {menuItems.map((item) => {
+                if (item.adminOnly && !isAdmin) return null;
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+
+                return (
+                  <Link key={item.href} to={item.href}>
+                    <Button
+                      variant={isActive ? "secondary" : "ghost"}
+                      className="w-full justify-start"
+                    >
+                      <Icon className="mr-2 h-4 w-4" />
+                      {item.title}
+                    </Button>
+                  </Link>
+                );
+              })}
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={signOut}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
     </div>
   );
 };

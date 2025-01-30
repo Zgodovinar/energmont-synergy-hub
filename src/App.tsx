@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AuthGuard from "./components/AuthGuard";
 import Index from "./pages/Index";
 import Workers from "./pages/Workers";
 import Projects from "./pages/Projects";
@@ -12,6 +13,7 @@ import Files from "./pages/Files";
 import Calendar from "./pages/Calendar";
 import Items from "./pages/Items";
 import Notifications from "./pages/Notifications";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -22,15 +24,79 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/workers" element={<Workers />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/files" element={<Files />} />
-          <Route path="/calendar" element={<Calendar />} />
-          <Route path="/items" element={<Items />} />
-          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <AuthGuard>
+                <Index />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/workers"
+            element={
+              <AuthGuard requireAdmin>
+                <Workers />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <AuthGuard requireAdmin>
+                <Projects />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AuthGuard requireAdmin>
+                <Analytics />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <AuthGuard>
+                <Chat />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/files"
+            element={
+              <AuthGuard>
+                <Files />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <AuthGuard>
+                <Calendar />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/items"
+            element={
+              <AuthGuard>
+                <Items />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <AuthGuard>
+                <Notifications />
+              </AuthGuard>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
