@@ -22,15 +22,16 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
 
     const { lng, lat } = e.lngLat;
     
-    if (markerRef.current) {
-      markerRef.current.setLngLat([lng, lat]);
-    } else {
-      markerRef.current = new mapboxgl.Marker()
-        .setLngLat([lng, lat])
-        .addTo(mapInstance.current);
-    }
-
     try {
+      if (markerRef.current) {
+        markerRef.current.setLngLat([lng, lat]);
+      } else {
+        markerRef.current = new mapboxgl.Marker()
+          .setLngLat([lng, lat])
+          .addTo(mapInstance.current);
+      }
+
+      // Reverse geocoding
       const response = await fetch(
         `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
       );
@@ -55,7 +56,8 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
       
       mapInstance.current.flyTo({
         center: [lng, lat],
-        zoom: 14
+        zoom: 14,
+        essential: true
       });
 
       if (markerRef.current) {
