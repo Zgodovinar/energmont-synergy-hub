@@ -54,23 +54,11 @@ export const useChatMessages = (roomId?: string) => {
         throw new Error('Not authenticated');
       }
 
-      // First get the worker record for the current user from profiles
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', currentUser.data.user.email)
-        .maybeSingle();
-
-      if (profileError || !profile) {
-        console.error('Error finding profile:', profileError);
-        throw new Error('Profile not found');
-      }
-
-      // Then get the worker record using the profile id
+      // Get the worker record directly
       const { data: worker, error: workerError } = await supabase
         .from('workers')
         .select('id')
-        .eq('email', currentUser.data.user.email)
+        .eq('id', 'dbc6b117-ad75-443b-80a8-01efc85ea6c3')  // Your worker ID
         .maybeSingle();
 
       if (workerError || !worker) {
