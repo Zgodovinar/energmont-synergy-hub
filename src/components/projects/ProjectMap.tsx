@@ -1,9 +1,11 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
 import { ProjectLocation } from '@/types/project';
 import { useMapInstance } from '@/hooks/useMapInstance';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface ProjectMapProps {
   onLocationSelect: (location: ProjectLocation) => void;
@@ -32,7 +34,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
 
       // Reverse geocoding
       fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${process.env.VITE_MAPBOX_TOKEN}`
       )
         .then((response) => response.json())
         .then((data) => {
@@ -59,7 +61,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
     if (!address || !mapInstance.current) return;
 
     fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${process.env.VITE_MAPBOX_TOKEN}`
     )
       .then((response) => response.json())
       .then((data) => {
