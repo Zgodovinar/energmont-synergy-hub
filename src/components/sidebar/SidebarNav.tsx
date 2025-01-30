@@ -5,12 +5,11 @@ import { SidebarItem } from "./SidebarItem";
 import { menuItems } from "./menuItems";
 
 interface SidebarNavProps {
-  isCollapsed: boolean;
   isAdmin: boolean;
   signOut: () => void;
 }
 
-export const SidebarNav = ({ isCollapsed, isAdmin, signOut }: SidebarNavProps) => {
+export const SidebarNav = ({ isAdmin, signOut }: SidebarNavProps) => {
   const location = useLocation();
 
   return (
@@ -27,17 +26,16 @@ export const SidebarNav = ({ isCollapsed, isAdmin, signOut }: SidebarNavProps) =
               icon={item.icon}
               title={item.title}
               isActive={isActive}
-              isCollapsed={isCollapsed}
             />
           );
         })}
         <Button
           variant="ghost"
-          className={`w-full justify-start ${isCollapsed ? 'px-2' : 'px-4'}`}
+          className="w-full justify-start px-4"
           onClick={signOut}
         >
           <LogOut className="h-4 w-4" />
-          {!isCollapsed && <span className="ml-2">Sign Out</span>}
+          <span className="ml-2">Sign Out</span>
         </Button>
       </div>
     </div>
