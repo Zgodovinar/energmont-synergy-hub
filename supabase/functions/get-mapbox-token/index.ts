@@ -11,7 +11,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
-  const token = Deno.env.get('MAPBOX_TOKEN')
+  const token = Deno.env.get('MAPBOX_PUBLIC_TOKEN')
   
   if (!token) {
     return new Response(
