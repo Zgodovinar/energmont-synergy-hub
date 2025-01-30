@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Users, FolderKanban, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const MetricCard = ({ 
   icon: Icon, 
@@ -27,25 +29,53 @@ const MetricCard = ({
 );
 
 const DashboardMetrics = () => {
+  const { data: workersCount = 0 } = useQuery({
+    queryKey: ['workers-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('workers')
+        .select('*', { count: 'exact', head: true });
+      
+      if (error) throw error;
+      return count || 0;
+    }
+  });
+
+  const { data: projectsData = { active: 0, completed: 0 } } = useQuery({
+    queryKey: ['projects-metrics'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('status');
+      
+      if (error) throw error;
+
+      const active = data.filter(p => p.status === 'in_progress').length;
+      const completed = data.filter(p => p.status === 'completed').length;
+      
+      return { active, completed };
+    }
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <MetricCard
         icon={Users}
         label="Total Workers"
-        value="48"
-        trend="+12% this month"
+        value={workersCount}
+        trend={`${workersCount} active members`}
       />
       <MetricCard
         icon={FolderKanban}
         label="Active Projects"
-        value="23"
-        trend="+5 new this week"
+        value={projectsData.active}
+        trend={`${projectsData.completed} completed this month`}
       />
       <MetricCard
         icon={CheckCircle}
-        label="Completed Tasks"
-        value="156"
-        trend="89% completion rate"
+        label="Completed Projects"
+        value={projectsData.completed}
+        trend={`${Math.round((projectsData.completed / (projectsData.active + projectsData.completed || 1)) * 100)}% completion rate`}
       />
     </div>
   );

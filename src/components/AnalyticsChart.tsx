@@ -7,35 +7,80 @@ const AnalyticsChart = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      const { data: analyticsData, error } = await supabase
-        .from('analytics')
-        .select('*')
-        .order('created_at', { ascending: true });
+    const calculateMonthlyMetrics = async () => {
+      console.log('Calculating monthly metrics...');
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('*');
 
-      if (error) {
-        console.error('Error fetching analytics:', error);
+      if (projectsError) {
+        console.error('Error fetching projects:', projectsError);
         return;
       }
 
-      setData(analyticsData);
+      // Group projects by month
+      const monthlyData = projects.reduce((acc, project) => {
+        const month = new Date(project.created_at).toLocaleString('default', { month: 'short' });
+        
+        if (!acc[month]) {
+          acc[month] = {
+            month,
+            projects: 0,
+            cost: 0,
+            profit: 0
+          };
+        }
+
+        acc[month].projects += 1;
+        acc[month].cost += Number(project.cost) || 0;
+        acc[month].profit += Number(project.profit) || 0;
+
+        return acc;
+      }, {});
+
+      // Convert to array and sort by month
+      const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const sortedData = Object.values(monthlyData).sort((a: any, b: any) => 
+        monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month)
+      );
+
+      console.log('Monthly metrics calculated:', sortedData);
+      setData(sortedData);
+
+      // Update analytics table
+      for (const monthData of Object.values(monthlyData)) {
+        const { error: upsertError } = await supabase
+          .from('analytics')
+          .upsert({
+            month: monthData.month,
+            projects: monthData.projects,
+            cost: monthData.cost,
+            profit: monthData.profit
+          }, {
+            onConflict: 'month'
+          });
+
+        if (upsertError) {
+          console.error('Error upserting analytics:', upsertError);
+        }
+      }
     };
 
-    fetchAnalytics();
+    calculateMonthlyMetrics();
 
-    // Set up real-time subscription
+    // Set up real-time subscription for projects table
     const channel = supabase
-      .channel('analytics-changes')
+      .channel('projects-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'analytics'
+          table: 'projects'
         },
-        (payload) => {
-          console.log('Real-time update received:', payload);
-          fetchAnalytics();
+        () => {
+          console.log('Projects changed, recalculating metrics...');
+          calculateMonthlyMetrics();
         }
       )
       .subscribe();
