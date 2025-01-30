@@ -6,7 +6,7 @@ export const chatService = {
     console.log('Getting or creating direct chat:', { currentWorkerId, targetWorkerId });
     
     // First check if a direct chat already exists between these users
-    const { data: existingChat } = await supabase
+    const { data: existingChats } = await supabase
       .from('chat_rooms')
       .select(`
         id,
@@ -14,12 +14,17 @@ export const chatService = {
           worker_id
         )
       `)
-      .eq('type', 'direct')
-      .contains('chat_room_participants.worker_id', [currentWorkerId, targetWorkerId]);
+      .eq('type', 'direct');
 
-    if (existingChat && existingChat.length > 0) {
-      console.log('Found existing direct chat:', existingChat[0].id);
-      return existingChat[0].id;
+    // Filter chats that have both participants
+    const directChat = existingChats?.find(chat => {
+      const participantIds = chat.chat_room_participants.map(p => p.worker_id);
+      return participantIds.includes(currentWorkerId) && participantIds.includes(targetWorkerId);
+    });
+
+    if (directChat) {
+      console.log('Found existing direct chat:', directChat.id);
+      return directChat.id;
     }
 
     // Get worker names for the chat room name
