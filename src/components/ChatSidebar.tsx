@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChatUser } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 import { chatService } from "@/services/chatService";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ChatSidebarProps {
   selectedRoomId?: string;
@@ -19,10 +20,12 @@ interface ChatSidebarProps {
 const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const { data: workers = [], isLoading: isLoadingWorkers } = useQuery({
     queryKey: ['workers'],
     queryFn: async () => {
+      console.log('Fetching workers...');
       const { data, error } = await supabase
         .from('workers')
         .select('id, name, role, image_url, status')
@@ -30,14 +33,19 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       if (error) throw error;
 
-      return data.map(worker => ({
-        id: worker.id,
-        name: worker.name,
-        role: worker.role,
-        avatar: worker.image_url,
-        isOnline: worker.status === 'active'
-      })) as ChatUser[];
-    }
+      // Filter out the current user from the workers list
+      const currentUserEmail = session?.user?.email;
+      return data
+        .filter(worker => worker.email !== currentUserEmail)
+        .map(worker => ({
+          id: worker.id,
+          name: worker.name,
+          role: worker.role,
+          avatar: worker.image_url,
+          isOnline: worker.status === 'active'
+        })) as ChatUser[];
+    },
+    enabled: !!session
   });
 
   const handleUserSelect = async (user: ChatUser) => {
