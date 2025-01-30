@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
+import { useRef, useState } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { MapPin } from 'lucide-react';
 import { ProjectLocation } from '@/types/project';
+import { useMapInstance } from '@/hooks/useMapInstance';
 
 interface ProjectMapProps {
   onLocationSelect: (location: ProjectLocation) => void;
@@ -13,89 +13,68 @@ interface ProjectMapProps {
 
 const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const marker = useRef<mapboxgl.Marker | null>(null);
   const [address, setAddress] = useState(initialLocation?.address || '');
+  const { mapInstance, markerRef } = useMapInstance(mapContainer, initialLocation);
 
-  useEffect(() => {
-    if (!mapContainer.current) return;
+  const handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
+    if (!mapInstance.current) return;
 
-    mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbHRxbXd4Z2gwMG5qMmtvMGw2Z3B4amF2In0.a9qmZUxfGGpXk2NqK-edKA';
+    const { lng, lat } = e.lngLat;
     
-    const initialCoordinates = initialLocation 
-      ? [initialLocation.lng, initialLocation.lat]
-      : [14.5058, 46.0569]; // Default to Ljubljana, Slovenia
-
-    const mapInstance = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: initialCoordinates as [number, number],
-      zoom: 12
-    });
-
-    map.current = mapInstance;
-
-    mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    if (initialLocation) {
-      marker.current = new mapboxgl.Marker()
-        .setLngLat([initialLocation.lng, initialLocation.lat])
-        .addTo(mapInstance);
+    if (markerRef.current) {
+      markerRef.current.setLngLat([lng, lat]);
+    } else {
+      markerRef.current = new mapboxgl.Marker()
+        .setLngLat([lng, lat])
+        .addTo(mapInstance.current);
     }
 
-    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
-      const { lng, lat } = e.lngLat;
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+      );
+      const data = await response.json();
+      const placeName = data.features[0]?.place_name;
+      setAddress(placeName || '');
+      onLocationSelect({ lat, lng, address: placeName });
+    } catch (error) {
+      console.error('Error fetching address:', error);
+    }
+  };
+
+  const handleAddressSearch = async () => {
+    if (!address || !mapInstance.current) return;
+
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`
+      );
+      const data = await response.json();
+      const [lng, lat] = data.features[0]?.center || [0, 0];
       
-      if (marker.current) {
-        marker.current.setLngLat([lng, lat]);
+      mapInstance.current.flyTo({
+        center: [lng, lat],
+        zoom: 14
+      });
+
+      if (markerRef.current) {
+        markerRef.current.setLngLat([lng, lat]);
       } else {
-        marker.current = new mapboxgl.Marker()
+        markerRef.current = new mapboxgl.Marker()
           .setLngLat([lng, lat])
-          .addTo(mapInstance);
+          .addTo(mapInstance.current);
       }
 
-      fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`)
-        .then(response => response.json())
-        .then(data => {
-          const placeName = data.features[0]?.place_name;
-          setAddress(placeName || '');
-          onLocationSelect({ lat, lng, address: placeName });
-        });
-    };
-
-    mapInstance.on('click', handleMapClick);
-
-    return () => {
-      mapInstance.remove();
-    };
-  }, []);
-
-  const handleAddressSearch = () => {
-    if (!address) return;
-
-    fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`)
-      .then(response => response.json())
-      .then(data => {
-        const [lng, lat] = data.features[0]?.center || [0, 0];
-        
-        if (map.current) {
-          map.current.flyTo({
-            center: [lng, lat],
-            zoom: 14
-          });
-
-          if (marker.current) {
-            marker.current.setLngLat([lng, lat]);
-          } else {
-            marker.current = new mapboxgl.Marker()
-              .setLngLat([lng, lat])
-              .addTo(map.current);
-          }
-
-          onLocationSelect({ lat, lng, address });
-        }
-      });
+      onLocationSelect({ lat, lng, address });
+    } catch (error) {
+      console.error('Error searching address:', error);
+    }
   };
+
+  // Add map click handler when map is loaded
+  if (mapInstance.current) {
+    mapInstance.current.on('click', handleMapClick);
+  }
 
   return (
     <div className="space-y-4">
