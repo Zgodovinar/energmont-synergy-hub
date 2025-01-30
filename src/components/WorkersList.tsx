@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWorkers } from "@/hooks/useWorkers";
+import { supabase } from "@/integrations/supabase/client";
 
 const WorkersList = () => {
   const [searchQuery, setSearchQuery] = useState("");
