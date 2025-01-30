@@ -74,10 +74,15 @@ export const useChatMessages = (roomId?: string) => {
         .from('chat_rooms')
         .select('id')
         .eq('id', roomId)
-        .single();
+        .maybeSingle();
 
-      if (chatRoomError || !chatRoom) {
+      if (chatRoomError) {
         console.error('Error finding chat room:', chatRoomError);
+        throw new Error('Error checking chat room');
+      }
+
+      if (!chatRoom) {
+        console.error('Chat room not found:', roomId);
         throw new Error('Chat room not found');
       }
 
