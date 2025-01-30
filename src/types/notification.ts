@@ -5,7 +5,7 @@ export interface Notification {
   title: string;
   message: string;
   source: NotificationSource;
-  recipient_id?: string;
-  read: boolean;
-  created_at: string;
+  recipient_id?: string | null;
+  read: boolean | null;
+  created_at: string | null;
 }

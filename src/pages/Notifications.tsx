@@ -5,17 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Bell, Calendar, MessageSquare, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Notification } from "@/types/notification";
+import { Notification, NotificationSource } from "@/types/notification";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const getSourceIcon = (source: Notification['source']) => {
+const getSourceIcon = (source: NotificationSource) => {
   switch (source) {
     case 'chat':
       return <MessageSquare className="h-5 w-5" />;
     case 'calendar':
       return <Calendar className="h-5 w-5" />;
     case 'project':
+      return <Bell className="h-5 w-5" />;
+    default:
       return <Bell className="h-5 w-5" />;
   }
 };
@@ -43,7 +45,10 @@ const Notifications = () => {
         throw error;
       }
 
-      return data;
+      return data.map(notification => ({
+        ...notification,
+        source: notification.source as NotificationSource // Type assertion to ensure source is correct
+      }));
     },
   });
 
@@ -160,7 +165,7 @@ const Notifications = () => {
                       <h3 className="font-medium">{notification.title}</h3>
                       <p className="text-sm text-gray-600">{notification.message}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(notification.created_at).toLocaleString()}
+                        {notification.created_at && new Date(notification.created_at).toLocaleString()}
                       </p>
                     </div>
                   </div>
