@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
 
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${process.env.VITE_MAPBOX_TOKEN}`
       );
       const data = await response.json();
       const placeName = data.features[0]?.place_name;
@@ -47,7 +48,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
 
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${process.env.VITE_MAPBOX_TOKEN}`
       );
       const data = await response.json();
       const [lng, lat] = data.features[0]?.center || [0, 0];

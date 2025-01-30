@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { ProjectLocation } from '@/types/project';
 
+// Set the access token
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || '';
+
 export const useMapInstance = (
   containerRef: React.RefObject<HTMLDivElement>,
   initialLocation?: ProjectLocation
@@ -11,8 +14,6 @@ export const useMapInstance = (
 
   useEffect(() => {
     if (!containerRef.current) return;
-
-    mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZSIsImEiOiJjbHRxbXd4Z2gwMG5qMmtvMGw2Z3B4amF2In0.a9qmZUxfGGpXk2NqK-edKA';
     
     const initialCoordinates = initialLocation 
       ? [initialLocation.lng, initialLocation.lat]
