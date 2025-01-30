@@ -87,6 +87,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          file_id: string | null
           id: string
           room_id: string | null
           sender_id: string | null
@@ -94,6 +95,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
+          file_id?: string | null
           id?: string
           room_id?: string | null
           sender_id?: string | null
@@ -101,11 +103,19 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
+          file_id?: string | null
           id?: string
           room_id?: string | null
           sender_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_room_id_fkey"
             columns: ["room_id"]

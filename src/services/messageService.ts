@@ -13,6 +13,12 @@ export const messageService = {
           id,
           name,
           image_url
+        ),
+        file:file_id (
+          id,
+          name,
+          file_url,
+          file_type
         )
       `)
       .eq('room_id', roomId)
@@ -32,19 +38,26 @@ export const messageService = {
         id: message.sender.id,
         name: message.sender.name,
         avatar: message.sender.image_url
-      }
+      },
+      file: message.file ? {
+        id: message.file.id,
+        name: message.file.name,
+        url: message.file.file_url,
+        type: message.file.file_type
+      } : undefined
     }));
   },
 
-  async sendMessage(roomId: string, senderId: string, content: string): Promise<void> {
-    console.log('Sending message:', { roomId, senderId, content });
+  async sendMessage(roomId: string, senderId: string, content: string, fileId?: string): Promise<void> {
+    console.log('Sending message:', { roomId, senderId, content, fileId });
 
     const { error: messageError } = await supabase
       .from('chat_messages')
       .insert({
         room_id: roomId,
         sender_id: senderId,
-        content
+        content,
+        file_id: fileId
       });
 
     if (messageError) {

@@ -2,10 +2,12 @@ import { useEffect, useRef } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { MessageSquare, Send, UserRound } from "lucide-react";
+import { MessageSquare, Send, UserRound, Paperclip } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import { ChatMessage } from "@/types/chat";
 import { useForm } from "react-hook-form";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatWindowProps {
   roomId?: string;
@@ -13,12 +15,15 @@ interface ChatWindowProps {
 
 interface MessageForm {
   message: string;
+  file?: FileList;
 }
 
 const ChatWindow = ({ roomId }: ChatWindowProps) => {
   const { messages, sendMessage, chatRooms } = useChat(roomId);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { register, handleSubmit, reset } = useForm<MessageForm>();
+  const { register, handleSubmit, reset, watch } = useForm<MessageForm>();
+  const { toast } = useToast();
+  const fileInput = watch("file");
 
   // Find the current chat room
   const currentRoom = chatRooms?.find(room => room.id === roomId);
@@ -29,11 +34,60 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
     }
   }, [messages]);
 
-  const onSubmit = (data: MessageForm) => {
-    if (!roomId || !data.message.trim()) return;
+  const onSubmit = async (data: MessageForm) => {
+    if (!roomId || (!data.message.trim() && !data.file?.[0])) return;
     
-    sendMessage({ roomId, content: data.message });
-    reset();
+    try {
+      let fileId: string | undefined;
+      
+      if (data.file?.[0]) {
+        const file = data.file[0];
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from('public')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('public')
+          .getPublicUrl(filePath);
+
+        // Create file record
+        const { data: fileData, error: fileError } = await supabase
+          .from('files')
+          .insert({
+            name: file.name,
+            file_url: publicUrlData.publicUrl,
+            file_type: file.type,
+            size: file.size
+          })
+          .select()
+          .single();
+
+        if (fileError) throw fileError;
+        fileId = fileData.id;
+      }
+
+      await sendMessage({ 
+        roomId, 
+        content: data.message,
+        fileId
+      });
+
+      reset();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive"
+      });
+    }
   };
 
   if (!roomId) {
@@ -94,6 +148,17 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
                 </div>
                 <div className="bg-secondary rounded-lg p-3">
                   <p className="text-sm text-secondary-foreground">{message.content}</p>
+                  {message.file && (
+                    <a
+                      href={message.file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                      {message.file.name}
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -110,6 +175,20 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
           placeholder="Type a message..."
           className="flex-1"
         />
+        <Input
+          type="file"
+          {...register("file")}
+          className="hidden"
+          id="file-upload"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={() => document.getElementById("file-upload")?.click()}
+        >
+          <Paperclip className="h-4 w-4" />
+        </Button>
         <Button type="submit" size="icon" className="bg-primary hover:bg-primary/90">
           <Send className="h-4 w-4" />
         </Button>
