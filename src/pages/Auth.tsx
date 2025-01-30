@@ -18,13 +18,13 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        if (error.message.includes("Email not confirmed")) {
+      if (signInError) {
+        if (signInError.message.includes("Email not confirmed")) {
           toast({
             variant: "destructive",
             title: "Email Not Confirmed",
@@ -34,10 +34,25 @@ const Auth = () => {
           toast({
             variant: "destructive",
             title: "Error",
-            description: error.message,
+            description: signInError.message,
           });
         }
         return;
+      }
+
+      // Get user role from profiles table
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .single();
+
+      console.log('Profile data:', profileData);
+
+      // Redirect based on role
+      if (profileData?.role === 'worker') {
+        navigate("/chat");
+      } else {
+        navigate("/");
       }
 
       toast({
@@ -45,7 +60,6 @@ const Auth = () => {
         description: "You have successfully logged in.",
       });
 
-      navigate("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
