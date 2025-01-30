@@ -1,9 +1,7 @@
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { ProjectLocation } from '@/types/project';
-
-// Set the access token from environment variable
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+import { supabase } from '@/integrations/supabase/client';
 
 export const useMapInstance = (
   containerRef: React.RefObject<HTMLDivElement>,
@@ -13,33 +11,54 @@ export const useMapInstance = (
   const markerRef = useRef<mapboxgl.Marker | null>(null);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    
-    const initialCoordinates = initialLocation 
-      ? [initialLocation.lng, initialLocation.lat]
-      : [14.5058, 46.0569]; // Default to Ljubljana, Slovenia
+    const initializeMap = async () => {
+      if (!containerRef.current) return;
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
-      center: initialCoordinates as [number, number],
-      zoom: 12
-    });
+      try {
+        // Fetch the token from Supabase Edge Function secrets
+        const { data: { token }, error } = await supabase.functions.invoke('get-mapbox-token');
+        
+        if (error || !token) {
+          console.error('Error fetching Mapbox token:', error);
+          return;
+        }
 
-    mapInstance.current = map;
+        // Set the access token
+        mapboxgl.accessToken = token;
+        
+        const initialCoordinates = initialLocation 
+          ? [initialLocation.lng, initialLocation.lat]
+          : [14.5058, 46.0569]; // Default to Ljubljana, Slovenia
 
-    map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+        const map = new mapboxgl.Map({
+          container: containerRef.current,
+          style: 'mapbox://styles/mapbox/streets-v12',
+          center: initialCoordinates as [number, number],
+          zoom: 12
+        });
 
-    if (initialLocation) {
-      markerRef.current = new mapboxgl.Marker()
-        .setLngLat([initialLocation.lng, initialLocation.lat])
-        .addTo(map);
-    }
+        mapInstance.current = map;
+
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        if (initialLocation) {
+          markerRef.current = new mapboxgl.Marker()
+            .setLngLat([initialLocation.lng, initialLocation.lat])
+            .addTo(map);
+        }
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
+    };
+
+    initializeMap();
 
     return () => {
-      map.remove();
-      mapInstance.current = null;
-      markerRef.current = null;
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+        markerRef.current = null;
+      }
     };
   }, []);
 
