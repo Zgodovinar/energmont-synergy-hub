@@ -15,10 +15,10 @@ interface ProjectMapProps {
 const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState(initialLocation?.address || '');
-  const { mapInstance, markerRef } = useMapInstance(mapContainer, initialLocation);
+  const { mapInstance, markerRef, isMapReady } = useMapInstance(mapContainer, initialLocation);
 
   const handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
-    if (!mapInstance.current) return;
+    if (!mapInstance.current || !isMapReady) return;
 
     const { lng, lat } = e.lngLat;
     
@@ -45,7 +45,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   };
 
   const handleAddressSearch = async () => {
-    if (!address || !mapInstance.current) return;
+    if (!address || !mapInstance.current || !isMapReady) return;
 
     try {
       const response = await fetch(
@@ -75,7 +75,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   };
 
   // Add map click handler when map is loaded
-  if (mapInstance.current) {
+  if (mapInstance.current && isMapReady) {
     mapInstance.current.on('click', handleMapClick);
   }
 

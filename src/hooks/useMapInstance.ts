@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { ProjectLocation } from '@/types/project';
@@ -10,13 +10,13 @@ export const useMapInstance = (
 ) => {
   const mapInstance = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const isInitialized = useRef(false);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
 
     const initializeMap = async () => {
-      if (!containerRef.current || isInitialized.current) return;
+      if (!containerRef.current || mapInstance.current) return;
 
       try {
         // Fetch the token from Supabase Edge Function
@@ -42,14 +42,15 @@ export const useMapInstance = (
           zoom: 12,
           maxZoom: 17,
           minZoom: 3,
-          trackResize: true
+          trackResize: true,
+          preserveDrawingBuffer: true // This helps with certain WebGL contexts
         });
 
         // Wait for map to load before doing anything else
-        await new Promise((resolve) => {
-          map.on('load', () => {
+        await new Promise<void>((resolve) => {
+          map.once('load', () => {
             if (isMounted) {
-              resolve(true);
+              resolve();
             }
           });
         });
@@ -61,7 +62,6 @@ export const useMapInstance = (
 
         // Store the map instance
         mapInstance.current = map;
-        isInitialized.current = true;
 
         // Add navigation controls after map is loaded
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -75,14 +75,13 @@ export const useMapInstance = (
             .addTo(map);
         }
 
-        // Force a resize to ensure the map renders correctly
-        setTimeout(() => {
-          map.resize();
-        }, 0);
+        // Force a resize and mark map as ready
+        map.resize();
+        setIsMapReady(true);
 
       } catch (error) {
         console.error('Error initializing map:', error);
-        isInitialized.current = false;
+        setIsMapReady(false);
       }
     };
 
@@ -91,7 +90,6 @@ export const useMapInstance = (
     // Cleanup function
     return () => {
       isMounted = false;
-      isInitialized.current = false;
       
       if (markerRef.current) {
         markerRef.current.remove();
@@ -102,8 +100,10 @@ export const useMapInstance = (
         mapInstance.current.remove();
         mapInstance.current = null;
       }
+
+      setIsMapReady(false);
     };
   }, []);
 
-  return { mapInstance, markerRef };
+  return { mapInstance, markerRef, isMapReady };
 };
