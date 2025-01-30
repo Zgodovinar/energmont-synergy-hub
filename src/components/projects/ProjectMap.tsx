@@ -16,80 +16,87 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
   const [address, setAddress] = useState(initialLocation?.address || '');
+  const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
 
-  // Initialize map when component mounts
+  // Initialize map
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    const initializeMap = () => {
-      mapboxgl.accessToken = 'pk.eyJ1IjoiemdvZG92aW5hMSIsImEiOiJjbTZqcHgxNHQwMGxwMm9zZ3dmcWozcGdyIn0.LyyYbdFWwCgmVoV1miRv5Q';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiemdvZG92aW5hMSIsImEiOiJjbTZqcHgxNHQwMGxwMm9zZ3dmcWozcGdyIn0.LyyYbdFWwCgmVoV1miRv5Q';
 
-      const initialCoordinates = initialLocation 
-        ? [initialLocation.lng, initialLocation.lat]
-        : [14.5058, 46.0569]; // Default to Ljubljana, Slovenia
+    const initialCoordinates = initialLocation 
+      ? [initialLocation.lng, initialLocation.lat]
+      : [14.5058, 46.0569]; // Default to Ljubljana, Slovenia
 
-      const mapInstance = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center: initialCoordinates as [number, number],
-        zoom: 9
-      });
+    const mapInstance = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: initialCoordinates as [number, number],
+      zoom: 9
+    });
 
-      // Store the map instance
-      map.current = mapInstance;
+    map.current = mapInstance;
 
-      // Add navigation controls
-      mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    // Add navigation controls
+    mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-      // Add initial marker if location exists
-      if (initialLocation) {
-        marker.current = new mapboxgl.Marker()
-          .setLngLat([initialLocation.lng, initialLocation.lat])
-          .addTo(mapInstance);
-      }
+    // Add initial marker if location exists
+    if (initialLocation) {
+      marker.current = new mapboxgl.Marker()
+        .setLngLat([initialLocation.lng, initialLocation.lat])
+        .addTo(mapInstance);
+    }
 
-      // Add click handler
-      mapInstance.on('click', (e) => {
-        const { lng, lat } = e.lngLat;
-        
-        if (marker.current) {
-          marker.current.setLngLat([lng, lat]);
-        } else {
-          marker.current = new mapboxgl.Marker()
-            .setLngLat([lng, lat])
-            .addTo(mapInstance);
-        }
-
-        // Reverse geocoding
-        fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
-            const placeName = data.features[0]?.place_name || '';
-            setAddress(placeName);
-            onLocationSelect({ lat, lng, address: placeName });
-          })
-          .catch((error) => {
-            console.error('Error fetching address:', error);
-          });
-      });
-    };
-
-    initializeMap();
-
-    // Cleanup function
     return () => {
       if (marker.current) {
         marker.current.remove();
         marker.current = null;
       }
-      if (map.current) {
-        map.current.remove();
-        map.current = null;
+      mapInstance.remove();
+      map.current = null;
+    };
+  }, [initialLocation]);
+
+  // Handle map click events in a separate effect
+  useEffect(() => {
+    if (!map.current) return;
+
+    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+      const { lng, lat } = e.lngLat;
+      
+      if (marker.current) {
+        marker.current.setLngLat([lng, lat]);
+      } else {
+        marker.current = new mapboxgl.Marker()
+          .setLngLat([lng, lat])
+          .addTo(map.current!);
+      }
+
+      // Reverse geocoding
+      fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          const placeName = data.features[0]?.place_name || '';
+          setAddress(placeName);
+          onLocationSelect({ lat, lng, address: placeName });
+        })
+        .catch((error) => {
+          console.error('Error fetching address:', error);
+        });
+    };
+
+    clickListenerRef.current = handleMapClick;
+    map.current.on('click', handleMapClick);
+
+    return () => {
+      if (map.current && clickListenerRef.current) {
+        map.current.off('click', clickListenerRef.current);
+        clickListenerRef.current = null;
       }
     };
-  }, []); // Empty dependency array since we only want to initialize once
+  }, [onLocationSelect]);
 
   const handleAddressSearch = () => {
     if (!address || !map.current) return;
