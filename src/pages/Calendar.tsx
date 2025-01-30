@@ -12,6 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface Event {
   id: string;
@@ -23,27 +26,76 @@ interface Event {
 
 const CalendarPage = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [events, setEvents] = useState<Event[]>([]);
+  const { session } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch events for the current user
+  const { data: events = [], isLoading } = useQuery({
+    queryKey: ['calendar_events', session?.user.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select('*')
+        .eq('created_by', session?.user.id);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!session?.user.id
+  });
+
+  const addEventMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const eventData = {
+        title: formData.get("notification") as string,
+        description: formData.get("note") as string,
+        start_time: new Date(`${date?.toISOString().split('T')[0]}T${formData.get("time")}:00`),
+        end_time: new Date(`${date?.toISOString().split('T')[0]}T${formData.get("time")}:00`),
+        created_by: session?.user.id
+      };
+
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .insert([eventData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar_events'] });
+      toast({
+        title: "Event added",
+        description: "Your event has been successfully added to the calendar.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add event. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const handleAddEvent = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    
-    const newEvent: Event = {
-      id: Math.random().toString(),
-      date: date!,
-      time: formData.get("time") as string,
-      notification: formData.get("notification") as string,
-      note: formData.get("note") as string,
-    };
-
-    setEvents([...events, newEvent]);
-    toast({
-      title: "Event added",
-      description: "Your event has been successfully added to the calendar.",
-    });
+    addEventMutation.mutate(formData);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <main className="flex-1 ml-64 p-8">
+          <div>Loading...</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -80,12 +132,12 @@ const CalendarPage = () => {
                       <Input type="time" name="time" required />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Notification</label>
-                      <Input type="text" name="notification" placeholder="Notification message" required />
+                      <label className="block text-sm font-medium mb-1">Title</label>
+                      <Input type="text" name="notification" placeholder="Event title" required />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Note</label>
-                      <Textarea name="note" placeholder="Add a note..." />
+                      <label className="block text-sm font-medium mb-1">Description</label>
+                      <Textarea name="note" placeholder="Add event details..." />
                     </div>
                     <Button type="submit">Save Event</Button>
                   </form>
@@ -95,17 +147,17 @@ const CalendarPage = () => {
 
             <div className="space-y-4">
               {events
-                .filter((event) => event.date.toDateString() === date?.toDateString())
+                .filter((event) => new Date(event.start_time).toDateString() === date?.toDateString())
                 .map((event) => (
                   <div key={event.id} className="border p-4 rounded-md">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium">{event.time}</p>
-                        <p className="text-sm text-gray-600">{event.notification}</p>
+                        <p className="font-medium">{new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                        <p className="text-sm text-gray-600">{event.title}</p>
                       </div>
                     </div>
-                    {event.note && (
-                      <p className="text-sm text-gray-500 mt-2">{event.note}</p>
+                    {event.description && (
+                      <p className="text-sm text-gray-500 mt-2">{event.description}</p>
                     )}
                   </div>
                 ))}
