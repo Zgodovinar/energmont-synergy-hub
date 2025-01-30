@@ -37,7 +37,7 @@ export const useProjects = () => {
         id: project.id,
         name: project.name,
         description: project.description || '',
-        status: project.status || 'pending',
+        status: (project.status || 'pending') as Project['status'], // Explicitly type cast to union type
         startDate: project.start_date,
         deadline: project.deadline,
         cost: Number(project.cost) || 0,
