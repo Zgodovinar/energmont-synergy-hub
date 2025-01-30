@@ -15,7 +15,7 @@ interface ProjectMapProps {
 const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [address, setAddress] = useState(initialLocation?.address || '');
-  const { mapInstance, markerRef, isMapReady } = useMapInstance(mapContainer, initialLocation);
+  const { mapInstance, markerRef, isMapReady, clickListenerRef } = useMapInstance(mapContainer, initialLocation);
 
   const handleMapClick = async (e: mapboxgl.MapMouseEvent) => {
     if (!mapInstance.current || !isMapReady) return;
@@ -75,8 +75,9 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
   };
 
   // Add map click handler when map is loaded
-  if (mapInstance.current && isMapReady) {
-    mapInstance.current.on('click', handleMapClick);
+  if (mapInstance.current && isMapReady && !clickListenerRef.current) {
+    clickListenerRef.current = handleMapClick;
+    mapInstance.current.on('click', clickListenerRef.current);
   }
 
   return (

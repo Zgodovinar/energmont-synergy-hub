@@ -11,6 +11,7 @@ export const useMapInstance = (
   const mapInstance = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const clickListenerRef = useRef<((e: mapboxgl.MapMouseEvent) => void) | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,7 +44,7 @@ export const useMapInstance = (
           maxZoom: 17,
           minZoom: 3,
           trackResize: true,
-          preserveDrawingBuffer: true // This helps with certain WebGL contexts
+          preserveDrawingBuffer: true
         });
 
         // Wait for map to load before doing anything else
@@ -68,9 +69,7 @@ export const useMapInstance = (
 
         // Add initial marker if location exists
         if (initialLocation) {
-          markerRef.current = new mapboxgl.Marker({
-            draggable: false
-          })
+          markerRef.current = new mapboxgl.Marker()
             .setLngLat([initialLocation.lng, initialLocation.lat])
             .addTo(map);
         }
@@ -91,6 +90,11 @@ export const useMapInstance = (
     return () => {
       isMounted = false;
       
+      if (clickListenerRef.current && mapInstance.current) {
+        mapInstance.current.off('click', clickListenerRef.current);
+        clickListenerRef.current = null;
+      }
+
       if (markerRef.current) {
         markerRef.current.remove();
         markerRef.current = null;
@@ -103,7 +107,7 @@ export const useMapInstance = (
 
       setIsMapReady(false);
     };
-  }, []);
+  }, [initialLocation]);
 
-  return { mapInstance, markerRef, isMapReady };
+  return { mapInstance, markerRef, isMapReady, clickListenerRef };
 };
