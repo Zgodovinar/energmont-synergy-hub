@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Send } from "lucide-react";
+import { MessageSquare, Send } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import { ChatMessage } from "@/types/chat";
 import { useForm } from "react-hook-form";
@@ -35,8 +35,10 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
 
   if (!roomId) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-500">
-        Select a chat to start messaging
+      <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-8">
+        <MessageSquare className="h-12 w-12 mb-4 text-gray-400" />
+        <p className="text-lg font-medium mb-2">No chat selected</p>
+        <p className="text-sm">Select a worker or chat from the sidebar to start messaging</p>
       </div>
     );
   }
