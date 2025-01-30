@@ -3,8 +3,15 @@ import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 
+interface MonthlyMetric {
+  month: string;
+  projects: number;
+  cost: number;
+  profit: number;
+}
+
 const AnalyticsChart = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<MonthlyMetric[]>([]);
 
   useEffect(() => {
     const calculateMonthlyMetrics = async () => {
@@ -19,7 +26,7 @@ const AnalyticsChart = () => {
       }
 
       // Group projects by month
-      const monthlyData = projects.reduce((acc, project) => {
+      const monthlyData = projects.reduce<Record<string, MonthlyMetric>>((acc, project) => {
         const month = new Date(project.created_at).toLocaleString('default', { month: 'short' });
         
         if (!acc[month]) {
@@ -40,7 +47,7 @@ const AnalyticsChart = () => {
 
       // Convert to array and sort by month
       const monthOrder = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const sortedData = Object.values(monthlyData).sort((a: any, b: any) => 
+      const sortedData = Object.values(monthlyData).sort((a, b) => 
         monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month)
       );
 
