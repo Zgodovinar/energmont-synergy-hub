@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { ChatMessage } from "@/types/chat";
 
 export const useChatMessages = (roomId?: string) => {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
     queryKey: ['chatMessages', roomId],
@@ -54,7 +54,19 @@ export const useChatMessages = (roomId?: string) => {
         throw new Error('Not authenticated');
       }
 
-      // First verify that the room exists and the current user is a participant
+      // First get the worker record for the current user
+      const { data: worker, error: workerError } = await supabase
+        .from('workers')
+        .select('id')
+        .eq('email', currentUser.data.user.email)
+        .maybeSingle();
+
+      if (workerError || !worker) {
+        console.error('Error finding worker record:', workerError);
+        throw new Error('Worker record not found');
+      }
+
+      // Then verify that the room exists and the current worker is a participant
       const { data: room, error: roomError } = await supabase
         .from('chat_room_participants')
         .select(`
@@ -65,7 +77,7 @@ export const useChatMessages = (roomId?: string) => {
           )
         `)
         .eq('room_id', roomId)
-        .eq('worker_id', currentUser.data.user.id)
+        .eq('worker_id', worker.id)
         .maybeSingle();
 
       if (roomError || !room) {
@@ -78,7 +90,7 @@ export const useChatMessages = (roomId?: string) => {
         .insert({
           room_id: roomId,
           content,
-          sender_id: currentUser.data.user.id
+          sender_id: worker.id
         })
         .select()
         .single();
@@ -102,30 +114,6 @@ export const useChatMessages = (roomId?: string) => {
       });
     }
   });
-
-  useEffect(() => {
-    if (!roomId) return;
-
-    const channel = supabase
-      .channel(`room:${roomId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `room_id=eq.${roomId}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['chatMessages', roomId] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [roomId, queryClient]);
 
   return {
     messages,
