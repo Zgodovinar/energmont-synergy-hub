@@ -181,12 +181,13 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
 
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <MessageDisplay
               key={message.id}
               message={message}
               onMoveToFiles={moveToFiles}
               onDeleteFile={deleteFile}
+              isLastMessage={index === messages.length - 1}
             />
           ))}
         </div>

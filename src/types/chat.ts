@@ -20,9 +20,10 @@ export interface ChatFile {
 export interface ChatMessage {
   id: string;
   content: string;
-  timestamp: string;
+  created_at: string;
   sender: ChatParticipant;
   file?: ChatFile;
+  seen?: boolean;
 }
 
 export interface Message {
