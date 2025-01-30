@@ -5,11 +5,16 @@ export interface ChatParticipant {
   status?: string;
 }
 
-export interface ChatMessage {
+export interface ChatUser extends ChatParticipant {
+  role: string;
+  isOnline?: boolean;
+}
+
+export interface Message {
   id: string;
   content: string;
-  timestamp: string;
-  sender: ChatParticipant;
+  timestamp: Date;
+  senderId: string;
 }
 
 export interface ChatRoom {
@@ -17,4 +22,10 @@ export interface ChatRoom {
   name: string;
   type: 'direct' | 'group';
   participants: ChatParticipant[];
+  lastMessage?: string;
+  lastMessageTime?: Date;
+  userInfo?: {
+    isOnline?: boolean;
+    role?: string;
+  };
 }

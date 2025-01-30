@@ -5,7 +5,7 @@ import { ChatRoom } from "@/types/chat";
 interface ChatRoomItemProps {
   room: ChatRoom;
   isSelected: boolean;
-  onClick: (room: ChatRoom) => void;
+  onClick: () => void;
 }
 
 const ChatRoomItem = ({ room, isSelected, onClick }: ChatRoomItemProps) => {
@@ -16,7 +16,7 @@ const ChatRoomItem = ({ room, isSelected, onClick }: ChatRoomItemProps) => {
       className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer hover:bg-accent ${
         isSelected ? 'bg-accent' : ''
       }`}
-      onClick={() => onClick(room)}
+      onClick={onClick}
     >
       <Avatar>
         <AvatarFallback>

@@ -29,7 +29,7 @@ const ChatList = ({ items, selectedRoomId, onRoomSelect, onUserSelect }: ChatLis
                 key={`room-${item.id}`}
                 room={item}
                 isSelected={item.id === selectedRoomId}
-                onClick={onRoomSelect}
+                onClick={() => onRoomSelect(item)}
               />
             );
           }
