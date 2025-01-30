@@ -54,9 +54,12 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
     }
 
     // Create a new direct chat room
+    const currentUser = await supabase.auth.getUser();
+    if (!currentUser.data.user) return;
+
     createRoom({
       name: user.name,
-      participantIds: [user.id]
+      participantIds: [user.id, currentUser.data.user.id]
     });
   };
 
@@ -70,12 +73,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
           room.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       ]
-    : [...workers.filter(worker => 
-        !chatRooms.some(room => 
-          room.type === 'direct' && 
-          room.participants.some(p => p.id === worker.id)
-        )
-      ), ...chatRooms];
+    : [...workers, ...chatRooms];
 
   return (
     <div className="w-80 border-r flex flex-col">

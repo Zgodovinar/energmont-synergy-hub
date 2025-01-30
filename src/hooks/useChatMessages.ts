@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
 export const useChatMessages = (roomId?: string) => {
@@ -48,6 +48,18 @@ export const useChatMessages = (roomId?: string) => {
   const sendMessageMutation = useMutation({
     mutationFn: async ({ roomId, content }: { roomId: string; content: string }) => {
       console.log('Sending message:', { roomId, content });
+      
+      // First verify that the room exists
+      const { data: room, error: roomError } = await supabase
+        .from('chat_rooms')
+        .select('id')
+        .eq('id', roomId)
+        .single();
+
+      if (roomError || !room) {
+        throw new Error('Chat room not found');
+      }
+
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
@@ -68,7 +80,8 @@ export const useChatMessages = (roomId?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatMessages', roomId] });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error in sendMessage mutation:', error);
       toast({
         title: "Error",
         description: "Failed to send message",
