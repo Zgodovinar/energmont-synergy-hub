@@ -28,7 +28,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
       console.log('Fetching workers...');
       const { data, error } = await supabase
         .from('workers')
-        .select('id, name, role, image_url, status')
+        .select('id, name, role, image_url, status, email')
         .eq('status', 'active');
 
       if (error) throw error;
