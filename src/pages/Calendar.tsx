@@ -1,63 +1,47 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
-// Mock data for events - replace with real data from your backend
-const mockEvents = [
-  {
-    id: 1,
-    title: "Team Meeting",
-    date: new Date(2024, 3, 15, 10, 0),
-    type: "meeting",
-  },
-  {
-    id: 2,
-    title: "Project Review",
-    date: new Date(2024, 3, 15, 14, 30),
-    type: "review",
-  },
-  // Add more mock events as needed
-];
 
 const CalendarPage = () => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentEvents, setCurrentEvents] = useState([]);
 
-  const handleDateSelect = (newDate: Date | undefined) => {
-    setDate(newDate);
-    if (newDate) {
-      setSelectedDate(newDate);
-    }
+  // Fetch calendar events from Supabase
+  const { data: events, isLoading } = useQuery({
+    queryKey: ["calendar-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("calendar_events")
+        .select("*");
+      
+      if (error) throw error;
+      
+      // Transform the data to match FullCalendar's event format
+      return data.map(event => ({
+        id: event.id,
+        title: event.title,
+        start: event.start_time,
+        end: event.end_time,
+        description: event.description,
+        location: event.location,
+      }));
+    },
+  });
+
+  const handleDateSelect = (selectInfo: any) => {
+    console.log("Date selected:", selectInfo);
+    // TODO: Implement event creation dialog
   };
 
-  // Filter events for the selected date
-  const getDayEvents = () => {
-    return mockEvents.filter(
-      (event) => format(event.date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd")
-    );
-  };
-
-  // Generate time slots for the day
-  const getTimeSlots = () => {
-    const slots = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      for (let minute of [0, 30]) {
-        slots.push(
-          new Date(
-            selectedDate.getFullYear(),
-            selectedDate.getMonth(),
-            selectedDate.getDate(),
-            hour,
-            minute
-          )
-        );
-      }
-    }
-    return slots;
+  const handleEventClick = (clickInfo: any) => {
+    console.log("Event clicked:", clickInfo.event);
+    // TODO: Implement event details dialog
   };
 
   return (
@@ -66,72 +50,50 @@ const CalendarPage = () => {
       <main className="flex-1 ml-64 p-8">
         <h1 className="text-3xl font-bold mb-8">Calendar</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-          {/* Monthly Calendar */}
-          <Card className="md:col-span-5">
-            <CardHeader>
-              <CardTitle>Monthly View</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={handleDateSelect}
-                className="rounded-md border"
-              />
-            </CardContent>
-          </Card>
-
-          {/* Daily Schedule */}
-          <Card className="md:col-span-7">
-            <CardHeader>
-              <CardTitle>
-                Schedule for {format(selectedDate, "EEEE, MMMM do, yyyy")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px] w-full pr-4">
-                <div className="space-y-2">
-                  {getTimeSlots().map((timeSlot, index) => {
-                    const currentEvents = mockEvents.filter(
-                      (event) =>
-                        format(event.date, "yyyy-MM-dd HH:mm") ===
-                        format(timeSlot, "yyyy-MM-dd HH:mm")
-                    );
-
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="w-20 text-sm text-gray-500">
-                          {format(timeSlot, "h:mm a")}
-                        </div>
-                        <div className="flex-1 min-h-[2rem]">
-                          {currentEvents.map((event) => (
-                            <div
-                              key={event.id}
-                              className="mb-2 p-2 bg-white rounded-md border shadow-sm"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">{event.title}</span>
-                                <Badge
-                                  variant={event.type === "meeting" ? "default" : "secondary"}
-                                >
-                                  {event.type}
-                                </Badge>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="h-[800px]">
+              <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay",
+                }}
+                initialView="dayGridMonth"
+                editable={true}
+                selectable={true}
+                selectMirror={true}
+                dayMaxEvents={true}
+                weekends={true}
+                events={events || []}
+                select={handleDateSelect}
+                eventClick={handleEventClick}
+                eventContent={(eventInfo) => (
+                  <div className="p-1">
+                    <div className="font-semibold">{eventInfo.event.title}</div>
+                    {eventInfo.event.extendedProps.description && (
+                      <div className="text-xs text-gray-600">
+                        {eventInfo.event.extendedProps.description}
                       </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </div>
+                    )}
+                    {eventInfo.event.extendedProps.location && (
+                      <div className="text-xs text-gray-500">
+                        📍 {eventInfo.event.extendedProps.location}
+                      </div>
+                    )}
+                  </div>
+                )}
+                eventClassNames="rounded-md shadow-sm"
+                slotMinTime="06:00:00"
+                slotMaxTime="20:00:00"
+                allDaySlot={true}
+                nowIndicator={true}
+                height="100%"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
