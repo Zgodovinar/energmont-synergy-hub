@@ -7,10 +7,14 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { CreateEventDialog } from "@/components/calendar/CreateEventDialog";
 
 const CalendarPage = () => {
-  const [currentEvents, setCurrentEvents] = useState([]);
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [selectedTimes, setSelectedTimes] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
 
   // Fetch calendar events from Supabase
   const { data: events, isLoading } = useQuery({
@@ -22,7 +26,6 @@ const CalendarPage = () => {
       
       if (error) throw error;
       
-      // Transform the data to match FullCalendar's event format
       return data.map(event => ({
         id: event.id,
         title: event.title,
@@ -36,7 +39,11 @@ const CalendarPage = () => {
 
   const handleDateSelect = (selectInfo: any) => {
     console.log("Date selected:", selectInfo);
-    // TODO: Implement event creation dialog
+    setSelectedTimes({
+      start: selectInfo.start,
+      end: selectInfo.end,
+    });
+    setIsCreateEventOpen(true);
   };
 
   const handleEventClick = (clickInfo: any) => {
@@ -94,6 +101,18 @@ const CalendarPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {selectedTimes && (
+          <CreateEventDialog
+            isOpen={isCreateEventOpen}
+            onClose={() => {
+              setIsCreateEventOpen(false);
+              setSelectedTimes(null);
+            }}
+            startTime={selectedTimes.start}
+            endTime={selectedTimes.end}
+          />
+        )}
       </main>
     </div>
   );
