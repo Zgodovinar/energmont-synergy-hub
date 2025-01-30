@@ -57,6 +57,26 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
       }
 
       // Create a new direct chat room
+      const { data: newRoom, error } = await supabase
+        .from('chat_rooms')
+        .insert({
+          name: user.name,
+          type: 'direct'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating chat room:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create chat room",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get current user's worker record
       const currentUser = await supabase.auth.getUser();
       if (!currentUser.data.user) {
         toast({
@@ -67,14 +87,57 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
         return;
       }
 
-      const newRoom = await createRoom({
-        name: user.name,
-        participantIds: [user.id, currentUser.data.user.id]
-      });
+      // Get or create admin worker record if needed
+      const { data: adminWorker, error: adminWorkerError } = await supabase
+        .from('workers')
+        .select('id')
+        .eq('email', currentUser.data.user.email)
+        .maybeSingle();
 
-      if (newRoom) {
-        onRoomSelect(newRoom.id);
+      let currentWorkerId;
+      if (!adminWorker) {
+        const { data: newWorker, error: createWorkerError } = await supabase
+          .from('workers')
+          .insert({
+            name: 'Admin',
+            role: 'Admin',
+            email: currentUser.data.user.email,
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (createWorkerError) {
+          console.error('Error creating admin worker record:', createWorkerError);
+          throw new Error('Could not create admin worker record');
+        }
+
+        currentWorkerId = newWorker.id;
+      } else {
+        currentWorkerId = adminWorker.id;
       }
+
+      // Add participants to the chat room
+      const { error: participantsError } = await supabase
+        .from('chat_room_participants')
+        .insert([
+          { room_id: newRoom.id, worker_id: currentWorkerId },
+          { room_id: newRoom.id, worker_id: user.id }
+        ]);
+
+      if (participantsError) {
+        console.error('Error adding participants:', participantsError);
+        // Clean up the created room
+        await supabase.from('chat_rooms').delete().eq('id', newRoom.id);
+        toast({
+          title: "Error",
+          description: "Failed to add participants to chat room",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      onRoomSelect(newRoom.id);
     } catch (error) {
       console.error('Error creating chat room:', error);
       toast({
