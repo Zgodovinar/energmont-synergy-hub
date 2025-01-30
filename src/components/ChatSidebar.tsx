@@ -8,15 +8,15 @@ import ChatUserItem from "./chat/ChatUserItem";
 import ChatRoomItem from "./chat/ChatRoomItem";
 
 const initialUsers: ChatUser[] = [
-  { id: 1, name: "John Smith", role: "Project Manager", isOnline: true },
-  { id: 2, name: "Anna Johnson", role: "Senior Engineer", isOnline: true },
-  { id: 3, name: "Mike Wilson", role: "Technician", isOnline: false },
+  { id: '1', name: "John Smith", role: "Project Manager", isOnline: true },
+  { id: '2', name: "Anna Johnson", role: "Senior Engineer", isOnline: true },
+  { id: '3', name: "Mike Wilson", role: "Technician", isOnline: false },
 ];
 
 interface ChatSidebarProps {
   rooms: ChatRoom[];
   onRoomSelect: (room: ChatRoom) => void;
-  selectedRoomId?: number;
+  selectedRoomId?: string;
 }
 
 const ChatSidebar = ({ rooms, onRoomSelect, selectedRoomId }: ChatSidebarProps) => {
@@ -49,10 +49,10 @@ const ChatSidebar = ({ rooms, onRoomSelect, selectedRoomId }: ChatSidebarProps) 
     }
 
     const newRoom: ChatRoom = {
-      id: Math.max(...rooms.map(r => r.id), 0) + 1,
+      id: crypto.randomUUID(), // Generate UUID for new room
       name: user.name,
       type: 'direct',
-      participants: [1, user.id],
+      participants: ['1', user.id],
       lastMessageTime: new Date(),
       userInfo: {
         isOnline: user.isOnline,

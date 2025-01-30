@@ -1,5 +1,5 @@
 export interface ChatUser {
-  id: number;
+  id: string;  // Changed from number to string
   name: string;
   role: string;
   avatar?: string;
@@ -7,10 +7,10 @@ export interface ChatUser {
 }
 
 export interface ChatRoom {
-  id: number;
+  id: string;  // Changed from number to string
   name: string;
   type: 'direct' | 'team';
-  participants: number[];
+  participants: string[];  // Changed from number[] to string[]
   lastMessage?: string;
   lastMessageTime?: Date;
   userInfo?: {
@@ -20,9 +20,9 @@ export interface ChatRoom {
 }
 
 export interface Message {
-  id: number;
-  senderId: number;
+  id: string;  // Changed from number to string
+  senderId: string;  // Changed from number to string
   content: string;
   timestamp: Date;
-  roomId: number;
+  roomId: string;  // Changed from number to string
 }

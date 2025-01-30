@@ -15,7 +15,7 @@ interface ChatWindowProps {
 
 const ChatWindow = ({ room, messages, onSendMessage }: ChatWindowProps) => {
   const [newMessage, setNewMessage] = useState("");
-  const currentUserId = 1; // This would come from authentication
+  const currentUserId = '1'; // Changed to string to match new types
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !room) return;

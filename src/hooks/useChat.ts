@@ -18,7 +18,7 @@ export const useChat = () => {
       
       if (error) throw error;
       return data.map(room => ({
-        id: parseInt(room.id),
+        id: room.id,
         name: room.name,
         type: room.type as 'direct' | 'team',
         participants: [],
@@ -41,11 +41,11 @@ export const useChat = () => {
       
       if (error) throw error;
       return data.map(msg => ({
-        id: parseInt(msg.id),
-        senderId: parseInt(msg.sender_id),
+        id: msg.id,
+        senderId: msg.sender_id,
         content: msg.content,
         timestamp: new Date(msg.created_at),
-        roomId: parseInt(msg.room_id)
+        roomId: msg.room_id
       }));
     },
     enabled: !!selectedRoom
@@ -56,11 +56,11 @@ export const useChat = () => {
     mutationFn: async (newMessage: Omit<Message, 'id' | 'timestamp'>) => {
       const { error } = await supabase
         .from('chat_messages')
-        .insert([{
+        .insert({
           content: newMessage.content,
           room_id: newMessage.roomId,
           sender_id: newMessage.senderId
-        }]);
+        });
       
       if (error) throw error;
     },
@@ -103,7 +103,7 @@ export const useChat = () => {
     sendMessageMutation.mutate({
       content,
       roomId: selectedRoom.id,
-      senderId: 1 // TODO: Replace with actual user ID
+      senderId: '1' // TODO: Replace with actual user ID (now as string)
     });
   }, [selectedRoom, sendMessageMutation]);
 
