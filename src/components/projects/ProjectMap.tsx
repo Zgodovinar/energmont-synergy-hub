@@ -25,22 +25,24 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
       ? [initialLocation.lng, initialLocation.lat]
       : [14.5058, 46.0569]; // Default to Ljubljana, Slovenia
 
-    map.current = new mapboxgl.Map({
+    const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/streets-v12',
       center: initialCoordinates as [number, number],
       zoom: 12
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current = mapInstance;
+
+    mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
     if (initialLocation) {
       marker.current = new mapboxgl.Marker()
         .setLngLat([initialLocation.lng, initialLocation.lat])
-        .addTo(map.current);
+        .addTo(mapInstance);
     }
 
-    map.current.on('click', (e) => {
+    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
       
       if (marker.current) {
@@ -48,7 +50,7 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
       } else {
         marker.current = new mapboxgl.Marker()
           .setLngLat([lng, lat])
-          .addTo(map.current!);
+          .addTo(mapInstance);
       }
 
       fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`)
@@ -58,10 +60,12 @@ const ProjectMap = ({ onLocationSelect, initialLocation }: ProjectMapProps) => {
           setAddress(placeName || '');
           onLocationSelect({ lat, lng, address: placeName });
         });
-    });
+    };
+
+    mapInstance.on('click', handleMapClick);
 
     return () => {
-      map.current?.remove();
+      mapInstance.remove();
     };
   }, []);
 

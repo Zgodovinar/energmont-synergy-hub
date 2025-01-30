@@ -430,6 +430,7 @@ export type Database = {
           deadline: string | null
           description: string | null
           id: string
+          location: Json | null
           name: string
           notes: string | null
           profit: number | null
@@ -443,6 +444,7 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          location?: Json | null
           name: string
           notes?: string | null
           profit?: number | null
@@ -456,6 +458,7 @@ export type Database = {
           deadline?: string | null
           description?: string | null
           id?: string
+          location?: Json | null
           name?: string
           notes?: string | null
           profit?: number | null
