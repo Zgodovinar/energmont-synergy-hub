@@ -10,9 +10,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { CreateEventDialog } from "@/components/calendar/CreateEventDialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { EventDetailsDialog } from "@/components/calendar/EventDetailsDialog";
 
 const CalendarPage = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedTimes, setSelectedTimes] = useState<{
     start: Date;
     end: Date;
@@ -38,13 +40,15 @@ const CalendarPage = () => {
         end: event.end_time,
         description: event.description,
         allDay: false,
+        extendedProps: {
+          description: event.description
+        }
       }));
     },
   });
 
   const handleEventClick = (clickInfo: any) => {
-    console.log("Event clicked:", clickInfo.event);
-    // TODO: Implement event details dialog
+    setSelectedEvent(clickInfo.event);
   };
 
   return (
@@ -62,7 +66,7 @@ const CalendarPage = () => {
           </Button>
         </div>
         
-        <Card>
+        <Card className="shadow-lg">
           <CardContent className="p-6">
             <div className="h-[800px]">
               <FullCalendar
@@ -73,28 +77,41 @@ const CalendarPage = () => {
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
                 initialView="dayGridMonth"
-                editable={true}
+                editable={false}
                 selectable={false}
                 selectMirror={true}
                 dayMaxEvents={true}
                 weekends={true}
                 events={events || []}
                 eventClick={handleEventClick}
+                eventDisplay="block"
                 eventContent={(eventInfo) => (
-                  <div className="p-1">
-                    <div className="font-semibold">{eventInfo.event.title}</div>
-                    {eventInfo.event.extendedProps.description && (
-                      <div className="text-xs text-gray-600">
+                  <div className="p-1 cursor-pointer hover:opacity-90 transition-opacity">
+                    <div className="font-semibold truncate">{eventInfo.event.title}</div>
+                    {eventInfo.view.type === "dayGridMonth" && eventInfo.event.extendedProps.description && (
+                      <div className="text-xs text-gray-600 truncate">
                         {eventInfo.event.extendedProps.description}
                       </div>
                     )}
                   </div>
                 )}
-                eventClassNames="rounded-md shadow-sm"
-                slotMinTime="06:00:00"
-                slotMaxTime="20:00:00"
-                allDaySlot={true}
-                nowIndicator={true}
+                dayCellContent={(args) => {
+                  const dayEvents = events?.filter(event => {
+                    const eventDate = new Date(event.start);
+                    return eventDate.toDateString() === args.date.toDateString();
+                  });
+                  
+                  return (
+                    <div className="relative p-2">
+                      {dayEvents && dayEvents.length > 0 && (
+                        <div className="absolute top-0 left-0 bg-primary text-white text-xs px-1.5 py-0.5 rounded-br">
+                          {dayEvents.length}
+                        </div>
+                      )}
+                      <div className="text-right">{args.dayNumberText}</div>
+                    </div>
+                  );
+                }}
                 height="100%"
               />
             </div>
@@ -106,6 +123,12 @@ const CalendarPage = () => {
           onClose={() => setIsCreateEventOpen(false)}
           startTime={selectedTimes.start}
           endTime={selectedTimes.end}
+        />
+
+        <EventDetailsDialog
+          event={selectedEvent}
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
         />
       </main>
     </div>

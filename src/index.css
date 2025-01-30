@@ -90,7 +90,7 @@
 }
 
 .fc .fc-toolbar-title {
-  @apply text-xl font-semibold;
+  @apply text-2xl font-bold text-gray-900;
 }
 
 .fc .fc-button {
@@ -105,26 +105,58 @@
 .fc-theme-standard td, 
 .fc-theme-standard th,
 .fc-theme-standard .fc-scrollgrid {
-  @apply border-border;
+  @apply border-gray-200;
 }
 
 .fc .fc-day-today {
-  @apply bg-muted/50;
+  @apply bg-blue-50/50;
 }
 
 .fc-event {
-  @apply cursor-pointer transition-opacity hover:opacity-80;
+  @apply cursor-pointer transition-all hover:opacity-90 shadow-sm;
 }
 
 .fc-daygrid-event {
-  @apply rounded-md px-2 py-1;
+  @apply rounded-md px-2 py-1 bg-primary text-white border-none;
 }
 
 .fc-timegrid-event {
-  @apply rounded-sm border-l-4;
+  @apply rounded-sm border-l-4 bg-primary/90 text-white;
+}
+
+.fc .fc-daygrid-day {
+  @apply transition-colors hover:bg-gray-50/50;
+}
+
+.fc .fc-col-header-cell {
+  @apply bg-gray-50/50 py-3;
+}
+
+.fc .fc-daygrid-day-number {
+  @apply text-sm font-medium text-gray-700;
+}
+
+.fc .fc-daygrid-day-top {
+  @apply flex-col-reverse;
 }
 
 .fc .fc-cell-shaded, 
 .fc .fc-day-disabled {
-  @apply bg-muted/30;
+  @apply bg-gray-50/30;
+}
+
+.fc .fc-day-other .fc-daygrid-day-top {
+  @apply opacity-50;
+}
+
+.fc .fc-multimonth {
+  @apply shadow-none border-none;
+}
+
+.fc .fc-multimonth-title {
+  @apply text-lg font-semibold;
+}
+
+.fc .fc-multimonth-daygrid {
+  @apply bg-white rounded-lg shadow-sm;
 }
