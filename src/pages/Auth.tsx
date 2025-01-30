@@ -41,9 +41,14 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md p-8 space-y-6">
-        <div className="text-center">
+        <div className="text-center space-y-4">
+          <img 
+            src="/lovable-uploads/005d9bc9-9de8-4430-b0cc-12d6bc393294.png" 
+            alt="Company Logo" 
+            className="h-12 mx-auto"
+          />
           <h1 className="text-2xl font-bold">Welcome Back</h1>
-          <p className="text-gray-600 mt-2">Please sign in to continue</p>
+          <p className="text-gray-600">Please sign in to continue</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

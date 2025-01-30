@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +22,20 @@ const Sidebar = () => {
   const location = useLocation();
   const { isAdmin, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  // Store sidebar state in localStorage
+  useEffect(() => {
+    const storedState = localStorage.getItem('sidebarCollapsed');
+    if (storedState !== null) {
+      setIsCollapsed(JSON.parse(storedState));
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(newState));
+  };
 
   const menuItems = [
     {
@@ -76,7 +90,7 @@ const Sidebar = () => {
 
   return (
     <div 
-      className={`fixed left-0 top-0 z-40 h-screen border-r bg-background transition-all duration-300 ${
+      className={`fixed left-0 top-0 z-40 h-screen border-r bg-background transition-all duration-300 ease-in-out transform ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -89,7 +103,7 @@ const Sidebar = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={toggleSidebar}
           className="ml-2"
         >
           {isCollapsed ? (
