@@ -22,10 +22,23 @@ export const chatService = {
       return existingChat[0].id;
     }
 
+    // Get worker names for the chat room name
+    const { data: workers } = await supabase
+      .from('workers')
+      .select('name')
+      .in('id', [currentWorkerId, targetWorkerId]);
+
+    if (!workers || workers.length !== 2) {
+      throw new Error('Could not find worker information');
+    }
+
+    const chatName = `${workers[0].name} & ${workers[1].name}`;
+
     // Create new direct chat
     const { data: newChat, error: chatError } = await supabase
       .from('chat_rooms')
       .insert({
+        name: chatName,
         type: 'direct'
       })
       .select()
