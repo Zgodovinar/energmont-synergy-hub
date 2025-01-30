@@ -8,106 +8,127 @@ import WorkerFormDialog from "./WorkerFormDialog";
 import { Worker, CreateWorkerInput } from "@/types/worker";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-const initialWorkers = [
-  { 
-    id: 1, 
-    name: "John Smith", 
-    role: "Project Manager", 
-    projects: 5, 
-    email: "john@example.com", 
-    phone: "+1234567890",
-    address: "123 Main St",
-    status: "active" as const,
-    pay: 25,
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-  },
-  { 
-    id: 2, 
-    name: "Anna Johnson", 
-    role: "Senior Engineer", 
-    projects: 3, 
-    email: "anna@example.com",
-    phone: "+1234567891",
-    address: "456 Oak St",
-    status: "active" as const,
-    pay: 30,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-  },
-];
+import { useWorkers } from "@/hooks/useWorkers";
 
 const WorkersList = () => {
-  const [workers, setWorkers] = useState<Worker[]>(initialWorkers);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"edit" | "view">("edit");
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const { toast } = useToast();
+  const { workers, isLoading, createWorker, updateWorker, deleteWorker, updateWorkerImage } = useWorkers();
 
   const handleAddWorker = (data: CreateWorkerInput) => {
-    const newWorker: Worker = {
-      id: workers.length + 1,
-      ...data,
-      projects: 0,
-      status: "active",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-    };
-    setWorkers([...workers, newWorker]);
-    toast({
-      title: "Success",
-      description: "Worker added successfully",
+    createWorker(data, {
+      onSuccess: () => {
+        toast({
+          title: "Success",
+          description: "Worker added successfully",
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: "Failed to add worker",
+          variant: "destructive",
+        });
+      }
     });
   };
 
-  const handleEditWorker = (id: number) => (data: CreateWorkerInput) => {
-    setWorkers(
-      workers.map((worker) =>
-        worker.id === id
-          ? { ...worker, ...data }
-          : worker
-      )
+  const handleEditWorker = (id: string) => (data: CreateWorkerInput) => {
+    updateWorker(
+      { ...data, id },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Success",
+            description: "Worker updated successfully",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: "Failed to update worker",
+            variant: "destructive",
+          });
+        }
+      }
     );
-    toast({
-      title: "Success",
-      description: "Worker updated successfully",
-    });
   };
 
-  const handleDeleteWorker = (id: number) => {
+  const handleDeleteWorker = (id: string) => {
     if (confirm("Are you sure you want to delete this worker?")) {
-      setWorkers(workers.filter((worker) => worker.id !== id));
-      toast({
-        title: "Success",
-        description: "Worker deleted successfully",
+      deleteWorker(id, {
+        onSuccess: () => {
+          toast({
+            title: "Success",
+            description: "Worker deleted successfully",
+          });
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: "Failed to delete worker",
+            variant: "destructive",
+          });
+        }
       });
     }
   };
 
-  const handleImageUpload = (workerId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (workerId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setWorkers(workers.map(worker => 
-          worker.id === workerId 
-            ? { ...worker, image: reader.result as string }
-            : worker
-        ));
+      try {
+        // Upload to Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const { data, error } = await supabase.storage
+          .from('public')
+          .upload(`worker-images/${fileName}`, file);
+
+        if (error) throw error;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('public')
+          .getPublicUrl(`worker-images/${fileName}`);
+
+        // Update worker with new image URL
+        await updateWorkerImage(workerId, publicUrl);
+
         toast({
           title: "Success",
           description: "Worker image updated successfully",
         });
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to upload image",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const filteredWorkers = workers.filter((worker) =>
+  const filteredWorkers = workers?.filter((worker) =>
     worker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     worker.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
     worker.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) ?? [];
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <p>Loading workers...</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
