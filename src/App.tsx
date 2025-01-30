@@ -28,7 +28,7 @@ const App = () => (
           <Route
             path="/"
             element={
-              <AuthGuard requireAdmin>
+              <AuthGuard>
                 <Index />
               </AuthGuard>
             }
@@ -44,7 +44,7 @@ const App = () => (
           <Route
             path="/projects"
             element={
-              <AuthGuard requireAdmin>
+              <AuthGuard>
                 <Projects />
               </AuthGuard>
             }
@@ -68,7 +68,7 @@ const App = () => (
           <Route
             path="/files"
             element={
-              <AuthGuard requireAdmin>
+              <AuthGuard>
                 <Files />
               </AuthGuard>
             }
