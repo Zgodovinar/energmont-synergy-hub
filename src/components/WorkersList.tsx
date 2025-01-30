@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Edit2, Trash2, Eye, Upload, X } from "lucide-react";
-import WorkerFormDialog from "./WorkerFormDialog";
-import { Worker, CreateWorkerInput } from "@/types/worker";
-import { useToast } from "@/components/ui/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/components/ui/use-toast";
+import { Worker, CreateWorkerInput } from "@/types/worker";
 import { useWorkers } from "@/hooks/useWorkers";
 import { supabase } from "@/integrations/supabase/client";
+import WorkerFormDialog from "./WorkerFormDialog";
+import WorkerCard from "./workers/WorkerCard";
+import WorkerDetails from "./workers/WorkerDetails";
 
 const WorkersList = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,7 +82,6 @@ const WorkersList = () => {
     const file = event.target.files?.[0];
     if (file) {
       try {
-        // Upload to Supabase Storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const { data, error } = await supabase.storage
@@ -92,12 +90,10 @@ const WorkersList = () => {
 
         if (error) throw error;
 
-        // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('public')
           .getPublicUrl(`worker-images/${fileName}`);
 
-        // Update worker with new image URL
         await updateWorkerImage(workerId, publicUrl);
 
         toast({
@@ -163,128 +159,24 @@ const WorkersList = () => {
       <ScrollArea className="h-[calc(100vh-16rem)] mt-6">
         <div className="space-y-4">
           {filteredWorkers.map((worker) => (
-            <div
+            <WorkerCard
               key={worker.id}
-              className="flex flex-col p-4 bg-gray-50 rounded-lg space-y-4"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="relative group">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={worker.image} alt={worker.name} />
-                      <AvatarFallback>{worker.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    {viewMode === "edit" && (
-                      <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
-                        <Upload className="h-4 w-4 text-white" />
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(worker.id, e)}
-                        />
-                      </label>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{worker.name}</h3>
-                    <p className="text-sm text-gray-600">{worker.role}</p>
-                    <p className="text-sm text-gray-500">{worker.email}</p>
-                    <div className="flex items-center gap-4 mt-1">
-                      <p className="text-sm text-gray-500">{worker.phone}</p>
-                      <p className="text-sm text-gray-500">${worker.pay}/hr</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-end space-y-2">
-                  <Badge variant="outline" className="mb-2">
-                    {worker.projects} active projects
-                  </Badge>
-                  
-                  <div className="flex items-center space-x-2">
-                    {viewMode === "edit" ? (
-                      <>
-                        <WorkerFormDialog
-                          worker={worker}
-                          onSave={handleEditWorker(worker.id)}
-                          trigger={
-                            <Button variant="ghost" size="icon">
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteWorker(worker.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelectedWorker(worker)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+              worker={worker}
+              viewMode={viewMode}
+              onEdit={handleEditWorker(worker.id)}
+              onDelete={() => handleDeleteWorker(worker.id)}
+              onView={() => setSelectedWorker(worker)}
+              onImageUpload={(e) => handleImageUpload(worker.id, e)}
+            />
           ))}
         </div>
       </ScrollArea>
 
       {selectedWorker && (
-        <Dialog open={true} onOpenChange={() => setSelectedWorker(null)}>
-          <DialogContent className="max-w-2xl">
-            <div className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={selectedWorker.image} alt={selectedWorker.name} />
-                  <AvatarFallback>{selectedWorker.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-2xl font-semibold">{selectedWorker.name}</h2>
-                  <p className="text-gray-500">{selectedWorker.role}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                  <p>{selectedWorker.email}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Phone</h3>
-                  <p>{selectedWorker.phone}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Address</h3>
-                  <p>{selectedWorker.address}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Pay Rate</h3>
-                  <p>${selectedWorker.pay}/hr</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                  <Badge variant={selectedWorker.status === 'active' ? 'default' : 'secondary'}>
-                    {selectedWorker.status}
-                  </Badge>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Active Projects</h3>
-                  <p>{selectedWorker.projects}</p>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <WorkerDetails
+          worker={selectedWorker}
+          onClose={() => setSelectedWorker(null)}
+        />
       )}
     </Card>
   );
