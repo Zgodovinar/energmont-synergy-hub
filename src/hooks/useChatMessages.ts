@@ -67,20 +67,45 @@ export const useChatMessages = (roomId?: string) => {
       }
 
       const isAdmin = profile.role === 'admin';
+      console.log('User role check:', { isAdmin, profile });
 
-      // Get the worker record
-      const { data: worker, error: workerError } = await supabase
+      // If admin, get the admin's worker record
+      const { data: adminWorker, error: adminWorkerError } = await supabase
         .from('workers')
         .select('id')
         .eq('email', currentUser.data.user.email)
         .maybeSingle();
 
-      if (workerError || !worker) {
-        console.error('Error finding worker record:', workerError);
-        throw new Error('Worker record not found. Please make sure you have a worker profile.');
+      if (adminWorkerError) {
+        console.error('Error finding admin worker record:', adminWorkerError);
+        throw new Error('Could not verify admin worker record');
       }
 
-      // If user is admin, skip participant check
+      // If admin and no worker record found, create one
+      let workerId;
+      if (isAdmin && !adminWorker) {
+        const { data: newWorker, error: createWorkerError } = await supabase
+          .from('workers')
+          .insert({
+            name: 'Admin',
+            role: 'Admin',
+            email: currentUser.data.user.email,
+            status: 'active'
+          })
+          .select()
+          .single();
+
+        if (createWorkerError) {
+          console.error('Error creating admin worker record:', createWorkerError);
+          throw new Error('Could not create admin worker record');
+        }
+
+        workerId = newWorker.id;
+      } else {
+        workerId = adminWorker?.id;
+      }
+
+      // If admin, skip participant check
       if (!isAdmin) {
         // Verify that the room exists and the current worker is a participant
         const { data: room, error: roomError } = await supabase
@@ -93,7 +118,7 @@ export const useChatMessages = (roomId?: string) => {
             )
           `)
           .eq('room_id', roomId)
-          .eq('worker_id', worker.id)
+          .eq('worker_id', workerId)
           .maybeSingle();
 
         if (roomError || !room) {
@@ -107,7 +132,7 @@ export const useChatMessages = (roomId?: string) => {
         .insert({
           room_id: roomId,
           content,
-          sender_id: worker.id
+          sender_id: workerId
         })
         .select()
         .single();
