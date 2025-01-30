@@ -4,10 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Bell, Calendar, MessageSquare, Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Notification, NotificationSource } from "@/types/notification";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 const getSourceIcon = (source: NotificationSource) => {
   switch (source) {
@@ -26,14 +27,30 @@ const Notifications = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   // Fetch notifications
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+
+      // First get the worker record for the current user
+      const { data: worker, error: workerError } = await supabase
+        .from('workers')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+
+      if (workerError) {
+        console.error('Error fetching worker:', workerError);
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('recipient_id', worker.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -45,11 +62,9 @@ const Notifications = () => {
         throw error;
       }
 
-      return data.map(notification => ({
-        ...notification,
-        source: notification.source as NotificationSource // Type assertion to ensure source is correct
-      }));
+      return data;
     },
+    enabled: !!session?.user?.id
   });
 
   // Delete notification mutation
@@ -95,6 +110,8 @@ const Notifications = () => {
 
   // Setup real-time subscription
   useEffect(() => {
+    if (!session?.user?.id) return;
+
     const channel = supabase
       .channel('notifications-changes')
       .on(
@@ -113,7 +130,7 @@ const Notifications = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, session?.user?.id]);
 
   const handleDeleteNotification = (id: string) => {
     deleteMutation.mutate(id);
