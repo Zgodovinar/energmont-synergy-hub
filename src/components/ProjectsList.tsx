@@ -94,7 +94,6 @@ const ProjectsList = () => {
               key={project.id}
               project={project}
               onView={setSelectedProject}
-              onEdit={(project) => handleEditProject(project)}
               onDelete={handleDeleteProject}
             />
           ))}
@@ -105,6 +104,7 @@ const ProjectsList = () => {
         <ProjectView
           project={selectedProject}
           onClose={() => setSelectedProject(null)}
+          onEdit={handleEditProject(selectedProject)}
         />
       )}
     </Card>
