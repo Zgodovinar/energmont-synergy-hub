@@ -1,11 +1,11 @@
 interface AssignedWorker {
-  id: number;
+  id: string;
   name: string;
   avatar: string;
 }
 
 export interface Project {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   status: 'pending' | 'in_progress' | 'completed';
