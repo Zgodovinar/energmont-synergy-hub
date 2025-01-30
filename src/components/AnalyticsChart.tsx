@@ -1,22 +1,50 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-
-const data = [
-  { month: "Jan", projects: 4, cost: 45000, profit: 15000 },
-  { month: "Feb", projects: 6, cost: 65000, profit: 22000 },
-  { month: "Mar", projects: 8, cost: 85000, profit: 30000 },
-  { month: "Apr", projects: 5, cost: 55000, profit: 18000 },
-  { month: "May", projects: 7, cost: 75000, profit: 25000 },
-  { month: "Jun", projects: 9, cost: 95000, profit: 35000 },
-  { month: "Jul", projects: 8, cost: 85000, profit: 28000 },
-  { month: "Aug", projects: 7, cost: 75000, profit: 24000 },
-  { month: "Sep", projects: 6, cost: 65000, profit: 20000 },
-  { month: "Oct", projects: 8, cost: 85000, profit: 30000 },
-  { month: "Nov", projects: 9, cost: 95000, profit: 35000 },
-  { month: "Dec", projects: 7, cost: 75000, profit: 25000 },
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const AnalyticsChart = () => {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      const { data: analyticsData, error } = await supabase
+        .from('analytics')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching analytics:', error);
+        return;
+      }
+
+      setData(analyticsData);
+    };
+
+    fetchAnalytics();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('analytics-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'analytics'
+        },
+        (payload) => {
+          console.log('Real-time update received:', payload);
+          fetchAnalytics();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   return (
     <Card className="p-6">
       <h2 className="text-xl font-semibold mb-6">Projects Overview</h2>

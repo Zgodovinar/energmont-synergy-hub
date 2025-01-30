@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Worker, CreateWorkerInput } from "@/types/worker";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WorkerFormDialogProps {
   worker?: Worker;
@@ -14,29 +15,71 @@ interface WorkerFormDialogProps {
 
 const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [formData, setFormData] = useState<CreateWorkerInput>({
+  const [formData, setFormData] = useState<CreateWorkerInput & { password?: string }>({
     name: worker?.name || "",
     role: worker?.role || "",
     email: worker?.email || "",
     phone: worker?.phone || "",
     address: worker?.address || "",
     pay: worker?.pay || undefined,
+    password: "",
   });
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.role) {
+    if (!formData.name || !formData.role || !formData.email || !formData.password) {
       toast({
         title: "Error",
-        description: "Name and role are required",
+        description: "Name, role, email, and password are required",
         variant: "destructive",
       });
       return;
     }
-    onSave(formData);
-    setOpen(false);
-    setFormData({ name: "", role: "", email: "", phone: "", address: "", pay: undefined });
+
+    try {
+      // Create auth user first
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+
+      // Then create worker profile
+      const workerData = {
+        name: formData.name,
+        role: formData.role,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        pay: formData.pay,
+      };
+
+      onSave(workerData);
+      setOpen(false);
+      setFormData({ 
+        name: "", 
+        role: "", 
+        email: "", 
+        phone: "", 
+        address: "", 
+        pay: undefined, 
+        password: "" 
+      });
+    } catch (error) {
+      console.error('Error creating worker:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create worker account",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -75,6 +118,16 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="Enter worker email"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Enter worker password"
             />
           </div>
           <div className="space-y-2">
