@@ -2,13 +2,12 @@ import { Project } from "@/types/project";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit2, Trash2, Eye } from "lucide-react";
+import { Trash2, Eye } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ProjectCardProps {
   project: Project;
   onView: (project: Project) => void;
-  onEdit: (project: Project) => void;
   onDelete: (id: string) => void;
 }
 
@@ -25,7 +24,7 @@ const getStatusColor = (status: Project['status']) => {
   }
 };
 
-const ProjectCard = ({ project, onView, onEdit, onDelete }: ProjectCardProps) => {
+const ProjectCard = ({ project, onView, onDelete }: ProjectCardProps) => {
   return (
     <div className="flex flex-col p-4 bg-gray-50 rounded-lg space-y-2">
       <div className="flex justify-between items-start">
@@ -44,13 +43,6 @@ const ProjectCard = ({ project, onView, onEdit, onDelete }: ProjectCardProps) =>
               onClick={() => onView(project)}
             >
               <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(project)}
-            >
-              <Edit2 className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
