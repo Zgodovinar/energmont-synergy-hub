@@ -69,7 +69,19 @@ export const useChatMessages = (roomId?: string) => {
       const isAdmin = profile.role === 'admin';
       console.log('User role check:', { isAdmin, profile });
 
-      // If admin, get the admin's worker record
+      // First verify that the chat room exists
+      const { data: chatRoom, error: chatRoomError } = await supabase
+        .from('chat_rooms')
+        .select('id')
+        .eq('id', roomId)
+        .single();
+
+      if (chatRoomError || !chatRoom) {
+        console.error('Error finding chat room:', chatRoomError);
+        throw new Error('Chat room not found');
+      }
+
+      // If admin, get or create the admin's worker record
       const { data: adminWorker, error: adminWorkerError } = await supabase
         .from('workers')
         .select('id')
@@ -107,7 +119,7 @@ export const useChatMessages = (roomId?: string) => {
 
       // If admin, skip participant check
       if (!isAdmin) {
-        // Verify that the room exists and the current worker is a participant
+        // Verify that the current worker is a participant
         const { data: room, error: roomError } = await supabase
           .from('chat_room_participants')
           .select(`
