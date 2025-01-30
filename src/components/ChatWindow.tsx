@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { ScrollArea } from "./ui/scroll-area";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { MessageSquare, Send, UserRound, Paperclip, X, FolderUp, Trash } from "lucide-react";
+import { MessageSquare, Send, UserRound, Paperclip } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
-import { ChatMessage } from "@/types/chat";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import FilePreview from "./chat/FilePreview";
+import MessageDisplay from "./chat/MessageDisplay";
 
 interface ChatWindowProps {
   roomId?: string;
@@ -28,7 +29,6 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
   const { isAdmin } = useAuth();
   const [selectedFileId, setSelectedFileId] = useState<string>();
 
-  // Find the current chat room
   const currentRoom = chatRooms?.find(room => room.id === roomId);
 
   useEffect(() => {
@@ -44,7 +44,6 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
 
   const moveToFiles = async (fileId: string) => {
     try {
-      // Update the file record to mark it as saved to files
       const { error } = await supabase
         .from('files')
         .update({ saved_to_files: true })
@@ -100,19 +99,16 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
         const fileExt = file.name.split('.').pop();
         const filePath = `${crypto.randomUUID()}.${fileExt}`;
         
-        // Upload file to storage
         const { error: uploadError } = await supabase.storage
           .from('public')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: publicUrlData } = supabase.storage
           .from('public')
           .getPublicUrl(filePath);
 
-        // Create file record
         const { data: fileData, error: fileError } = await supabase
           .from('files')
           .insert({
@@ -159,7 +155,6 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Chat Header */}
       <div className="p-4 border-b bg-white shadow-sm">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-full">
@@ -186,61 +181,13 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
 
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message: ChatMessage) => (
-            <div
+          {messages.map((message) => (
+            <MessageDisplay
               key={message.id}
-              className="flex items-start gap-2.5"
-            >
-              <div className="p-2 bg-primary/10 rounded-full">
-                <UserRound className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex flex-col gap-1 max-w-[80%]">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold">
-                    {message.sender.name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className="bg-secondary rounded-lg p-3">
-                  <p className="text-sm text-secondary-foreground">{message.content}</p>
-                  {message.file && (
-                    <div className="mt-2 flex items-center gap-2">
-                      <a
-                        href={message.file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                      >
-                        <Paperclip className="h-4 w-4" />
-                        {message.file.name}
-                      </a>
-                      {isAdmin && (
-                        <div className="flex items-center gap-2 ml-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => moveToFiles(message.file.id)}
-                            className="h-6 w-6"
-                          >
-                            <FolderUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteFile(message.file.id)}
-                            className="h-6 w-6 text-destructive"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+              message={message}
+              onMoveToFiles={moveToFiles}
+              onDeleteFile={deleteFile}
+            />
           ))}
         </div>
       </ScrollArea>
@@ -250,19 +197,12 @@ const ChatWindow = ({ roomId }: ChatWindowProps) => {
         className="p-4 border-t bg-white"
       >
         {fileInput?.[0] && (
-          <div className="mb-2 p-2 bg-secondary rounded flex items-center gap-2">
-            <Paperclip className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{fileInput[0].name}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={clearFile}
-              className="ml-auto h-6 w-6"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <FilePreview
+            file={fileInput[0]}
+            fileId={selectedFileId}
+            onClear={clearFile}
+            isAdmin={isAdmin}
+          />
         )}
         <div className="flex gap-2">
           <Input

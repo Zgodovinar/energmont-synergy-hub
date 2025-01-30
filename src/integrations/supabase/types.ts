@@ -226,6 +226,7 @@ export type Database = {
           file_url: string
           id: string
           name: string
+          saved_to_files: boolean | null
           size: number | null
           uploaded_by: string | null
         }
@@ -235,6 +236,7 @@ export type Database = {
           file_url: string
           id?: string
           name: string
+          saved_to_files?: boolean | null
           size?: number | null
           uploaded_by?: string | null
         }
@@ -244,6 +246,7 @@ export type Database = {
           file_url?: string
           id?: string
           name?: string
+          saved_to_files?: boolean | null
           size?: number | null
           uploaded_by?: string | null
         }
