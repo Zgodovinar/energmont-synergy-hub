@@ -23,7 +23,6 @@ const Sidebar = () => {
   const { isAdmin, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Store sidebar state in localStorage
   useEffect(() => {
     const storedState = localStorage.getItem('sidebarCollapsed');
     if (storedState !== null) {
@@ -90,7 +89,7 @@ const Sidebar = () => {
 
   return (
     <div 
-      className={`fixed left-0 top-0 z-40 h-screen border-r bg-background transition-all duration-300 ease-in-out transform ${
+      className={`fixed left-0 top-0 z-40 h-screen border-r bg-background transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
