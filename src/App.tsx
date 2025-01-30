@@ -28,7 +28,7 @@ const App = () => (
           <Route
             path="/"
             element={
-              <AuthGuard>
+              <AuthGuard requireAdmin>
                 <Index />
               </AuthGuard>
             }
@@ -44,7 +44,7 @@ const App = () => (
           <Route
             path="/projects"
             element={
-              <AuthGuard>
+              <AuthGuard requireAdmin>
                 <Projects />
               </AuthGuard>
             }
@@ -68,7 +68,7 @@ const App = () => (
           <Route
             path="/files"
             element={
-              <AuthGuard>
+              <AuthGuard requireAdmin>
                 <Files />
               </AuthGuard>
             }
@@ -76,7 +76,7 @@ const App = () => (
           <Route
             path="/calendar"
             element={
-              <AuthGuard>
+              <AuthGuard requireAdmin>
                 <Calendar />
               </AuthGuard>
             }
@@ -94,6 +94,15 @@ const App = () => (
             element={
               <AuthGuard>
                 <Notifications />
+              </AuthGuard>
+            }
+          />
+          {/* Redirect workers to chat page by default */}
+          <Route
+            path="*"
+            element={
+              <AuthGuard>
+                <Navigate to="/chat" replace />
               </AuthGuard>
             }
           />

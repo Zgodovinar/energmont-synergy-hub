@@ -12,10 +12,19 @@ interface SidebarNavProps {
 export const SidebarNav = ({ isAdmin, signOut }: SidebarNavProps) => {
   const location = useLocation();
 
+  // Filter menu items based on user role
+  const visibleMenuItems = menuItems.filter(item => {
+    if (!isAdmin) {
+      // Only show chat and notifications for workers
+      return ['chat', 'notifications'].includes(item.href.replace('/', ''));
+    }
+    return true;
+  });
+
   return (
     <div className="px-3 py-2">
       <div className="space-y-1">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           if (item.adminOnly && !isAdmin) return null;
           const isActive = location.pathname === item.href;
 
