@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { chatService } from "@/services/chatService";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ChatMessage } from "@/types/chat";
+import { ChatMessage, SendMessageParams } from "@/types/chat";
 
 export const useChatMessages = (roomId?: string) => {
   const { toast } = useToast();
@@ -19,8 +19,8 @@ export const useChatMessages = (roomId?: string) => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ roomId, content }: { roomId: string; content: string }) => {
-      console.log('Sending message:', { roomId, content });
+    mutationFn: async (params: SendMessageParams) => {
+      console.log('Sending message:', params);
       
       const currentUser = await supabase.auth.getUser();
       if (!currentUser.data.user) {
@@ -30,7 +30,7 @@ export const useChatMessages = (roomId?: string) => {
       // Get or create admin worker record
       const workerId = await chatService.getOrCreateAdminWorker(currentUser.data.user.email!);
       
-      await chatService.sendMessage(roomId, workerId, content);
+      await chatService.sendMessage(params.roomId, workerId, params.content, params.fileId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatMessages', roomId] });

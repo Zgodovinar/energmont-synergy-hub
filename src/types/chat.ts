@@ -32,6 +32,12 @@ export interface Message {
   senderId: string;
 }
 
+export interface SendMessageParams {
+  roomId: string;
+  content: string;
+  fileId?: string;
+}
+
 export interface ChatRoom {
   id: string;
   name: string;
