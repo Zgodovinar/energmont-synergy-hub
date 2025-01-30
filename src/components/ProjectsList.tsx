@@ -30,9 +30,17 @@ const ProjectsList = () => {
     }
   };
 
-  const handleEditProject = (project: Project) => async (data: CreateProjectInput) => {
+  const handleEditProject = async (data: CreateProjectInput) => {
+    if (!selectedProject) return;
+    
     try {
-      await updateProject({ id: project.id, ...data });
+      // Create a clean copy of the data without methods
+      const cleanData = JSON.parse(JSON.stringify({
+        id: selectedProject.id,
+        ...data
+      }));
+      
+      await updateProject(cleanData);
       toast({
         title: "Success",
         description: "Project updated successfully",
@@ -64,6 +72,12 @@ const ProjectsList = () => {
     }
   };
 
+  const handleSelectProject = (project: Project) => {
+    // Create a clean copy of the project without methods
+    const cleanProject = JSON.parse(JSON.stringify(project));
+    setSelectedProject(cleanProject);
+  };
+
   const filteredProjects = projects?.filter((project) =>
     project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     project.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -93,7 +107,7 @@ const ProjectsList = () => {
             <ProjectCard
               key={project.id}
               project={project}
-              onView={setSelectedProject}
+              onView={handleSelectProject}
               onDelete={handleDeleteProject}
             />
           ))}
@@ -104,7 +118,7 @@ const ProjectsList = () => {
         <ProjectView
           project={selectedProject}
           onClose={() => setSelectedProject(null)}
-          onEdit={handleEditProject(selectedProject)}
+          onEdit={handleEditProject}
         />
       )}
     </Card>
