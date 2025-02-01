@@ -42,13 +42,26 @@ const NotificationSound = () => {
   useEffect(() => {
     // Get the notification sound URL from Supabase storage
     const getNotificationSound = async () => {
-      const { data } = supabase
+      console.log('Fetching notification sound URL...');
+      const { data, error } = await supabase
         .storage
         .from('public')
-        .getPublicUrl('sound/notification.mp3');
+        .createSignedUrl('sounds/notification.mp3', 3600);
       
-      if (data?.publicUrl && audioRef.current) {
-        audioRef.current.src = data.publicUrl;
+      if (error) {
+        console.error('Error getting notification sound URL:', error);
+        return;
+      }
+      
+      if (data?.signedUrl && audioRef.current) {
+        console.log('Setting notification sound URL:', data.signedUrl);
+        audioRef.current.src = data.signedUrl;
+        
+        // Test if audio can be loaded
+        audioRef.current.load();
+        audioRef.current.addEventListener('error', (e) => {
+          console.error('Error loading audio:', e);
+        });
       }
     };
 
@@ -76,6 +89,7 @@ const NotificationSound = () => {
           // Play sound
           const audio = audioRef.current;
           if (audio) {
+            console.log('Attempting to play notification sound...');
             audio.currentTime = 0;
             audio.play().catch(error => {
               console.error('Error playing notification sound:', error);
