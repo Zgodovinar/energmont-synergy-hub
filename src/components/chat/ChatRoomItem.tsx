@@ -1,15 +1,22 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trash2, Users } from "lucide-react";
 import { ChatRoom } from "@/types/chat";
 
 interface ChatRoomItemProps {
   room: ChatRoom;
   isSelected: boolean;
   onClick: () => void;
+  onDelete: (roomId: string) => void;
 }
 
-const ChatRoomItem = ({ room, isSelected, onClick }: ChatRoomItemProps) => {
+const ChatRoomItem = ({ room, isSelected, onClick, onDelete }: ChatRoomItemProps) => {
   const isDirectChat = room.type === 'direct';
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the onClick of the parent div
+    onDelete(room.id);
+  };
 
   return (
     <div
@@ -34,6 +41,14 @@ const ChatRoomItem = ({ room, isSelected, onClick }: ChatRoomItemProps) => {
       {isDirectChat && room.userInfo?.isOnline && (
         <div className="w-2 h-2 bg-green-500 rounded-full" />
       )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+        onClick={handleDelete}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

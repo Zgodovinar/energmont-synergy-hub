@@ -5,7 +5,7 @@ import { Plus, Users } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatUserItem from "./chat/ChatUserItem";
 import ChatSearch from "./chat/ChatSearch";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatUser } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
@@ -24,6 +24,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
   const [showAddChat, setShowAddChat] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: workers = [], isLoading: isLoadingWorkers } = useQuery({
     queryKey: ['workers'],
@@ -122,6 +123,54 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
     }
   };
 
+  const handleDeleteRoom = async (roomId: string) => {
+    try {
+      // First delete all messages in the room
+      const { error: messagesError } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (messagesError) throw messagesError;
+
+      // Then delete all participants
+      const { error: participantsError } = await supabase
+        .from('chat_room_participants')
+        .delete()
+        .eq('room_id', roomId);
+
+      if (participantsError) throw participantsError;
+
+      // Finally delete the room itself
+      const { error: roomError } = await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (roomError) throw roomError;
+
+      // If the deleted room was selected, clear the selection
+      if (selectedRoomId === roomId) {
+        onRoomSelect('');
+      }
+
+      // Invalidate the chat rooms query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+
+      toast({
+        title: "Success",
+        description: "Chat room deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting chat room:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chat room",
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredWorkers = searchQuery
     ? workers.filter(worker => 
         worker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -164,6 +213,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
                   room={room}
                   isSelected={room.id === selectedRoomId}
                   onClick={() => onRoomSelect(room.id)}
+                  onDelete={handleDeleteRoom}
                 />
               ))}
               {filteredWorkers.map((worker) => (
