@@ -528,7 +528,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_worker_projects_count: {
+        Args: {
+          worker_uuid: string
+        }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "worker"

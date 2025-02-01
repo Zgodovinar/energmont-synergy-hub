@@ -9,18 +9,39 @@ export const useWorkers = () => {
     queryKey: ['workers'],
     queryFn: async () => {
       console.log('Fetching workers...');
-      const { data, error } = await supabase
+      const { data: workersData, error: workersError } = await supabase
         .from('workers')
         .select('*');
 
-      if (error) {
-        console.error('Error fetching workers:', error);
-        throw error;
+      if (workersError) {
+        console.error('Error fetching workers:', workersError);
+        throw workersError;
       }
 
-      console.log('Workers fetched:', data);
+      // Fetch project counts for each worker
+      const workersWithProjects = await Promise.all(
+        workersData.map(async (worker) => {
+          const { data: projectCount, error: countError } = await supabase
+            .rpc('get_worker_projects_count', { worker_uuid: worker.id });
+
+          if (countError) {
+            console.error('Error fetching project count:', countError);
+            return {
+              ...worker,
+              projects: 0
+            };
+          }
+
+          return {
+            ...worker,
+            projects: projectCount || 0
+          };
+        })
+      );
+
+      console.log('Workers fetched with project counts:', workersWithProjects);
       
-      return data.map(worker => ({
+      return workersWithProjects.map(worker => ({
         id: worker.id,
         name: worker.name,
         role: worker.role,
@@ -30,7 +51,7 @@ export const useWorkers = () => {
         image: worker.image_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         pay: Number(worker.pay) || 0,
         status: (worker.status as Worker['status']) || 'active',
-        projects: 0 // We'll need to fetch this separately or compute it
+        projects: worker.projects
       }));
     }
   });
