@@ -40,6 +40,22 @@ const NotificationSound = () => {
   };
 
   useEffect(() => {
+    // Get the notification sound URL from Supabase storage
+    const getNotificationSound = async () => {
+      const { data } = supabase
+        .storage
+        .from('public')
+        .getPublicUrl('sound/notification.mp3');
+      
+      if (data?.publicUrl && audioRef.current) {
+        audioRef.current.src = data.publicUrl;
+      }
+    };
+
+    getNotificationSound();
+  }, []);
+
+  useEffect(() => {
     if (!workerId) return;
 
     console.log('Setting up notification listener for worker:', workerId);
@@ -85,7 +101,6 @@ const NotificationSound = () => {
   return (
     <audio 
       ref={audioRef} 
-      src="/sounds/notification.mp3" 
       preload="auto"
       style={{ display: 'none' }}
     />
