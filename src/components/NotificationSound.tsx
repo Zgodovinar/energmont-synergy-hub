@@ -39,43 +39,41 @@ const NotificationSound = () => {
     }
   };
 
+  // Initialize audio with user interaction
   useEffect(() => {
-    // Get the notification sound URL from Supabase storage
-    const getNotificationSound = async () => {
-      console.log('Fetching notification sound URL...');
-      
-      // First, list files to debug
-      const { data: files, error: listError } = await supabase
-        .storage
-        .from('public')
-        .list('sounds');
-      
-      console.log('Files in sounds folder:', files);
-      
-      if (listError) {
-        console.error('Error listing files:', listError);
-        return;
-      }
-
-      // Get the public URL directly
-      const { data: urlData } = supabase
-        .storage
-        .from('public')
-        .getPublicUrl('sounds/notification.mp3');
-      
-      if (urlData?.publicUrl && audioRef.current) {
-        console.log('Setting notification sound URL:', urlData.publicUrl);
-        audioRef.current.src = urlData.publicUrl;
+    const initializeAudio = async () => {
+      try {
+        if (!audioRef.current) return;
         
-        // Test if audio can be loaded
-        audioRef.current.load();
-        audioRef.current.addEventListener('error', (e) => {
-          console.error('Error loading audio:', e);
-        });
+        // Get the public URL directly
+        const { data: urlData } = supabase
+          .storage
+          .from('public')
+          .getPublicUrl('sounds/notification.mp3');
+        
+        if (urlData?.publicUrl) {
+          console.log('Setting notification sound URL:', urlData.publicUrl);
+          audioRef.current.src = urlData.publicUrl;
+          
+          // Test if audio can be loaded
+          await audioRef.current.load();
+          // Set volume to 50%
+          audioRef.current.volume = 0.5;
+          
+          // Try to play a silent test to handle autoplay policy
+          const playAttempt = await audioRef.current.play();
+          if (playAttempt !== undefined) {
+            playAttempt.catch(e => {
+              console.log('Autoplay prevented, waiting for user interaction:', e);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing audio:', error);
       }
     };
 
-    getNotificationSound();
+    initializeAudio();
   }, []);
 
   useEffect(() => {
@@ -106,11 +104,12 @@ const NotificationSound = () => {
             });
           }
 
-          // Show toast notification
+          // Show toast notification with longer duration
           toast({
             title: `${getSourceIcon(payload.new.source)} ${payload.new.title}`,
             description: payload.new.message,
-            duration: 5000,
+            duration: 5000, // Show for 5 seconds
+            variant: "default",
           });
         }
       )
