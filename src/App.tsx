@@ -37,7 +37,7 @@ const App = () => (
             <Route
               index
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Index />
                 </AuthGuard>
               }
@@ -45,7 +45,7 @@ const App = () => (
             <Route
               path="workers"
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Workers />
                 </AuthGuard>
               }
@@ -53,7 +53,7 @@ const App = () => (
             <Route
               path="projects"
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Projects />
                 </AuthGuard>
               }
@@ -61,7 +61,7 @@ const App = () => (
             <Route
               path="analytics"
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Analytics />
                 </AuthGuard>
               }
@@ -73,7 +73,7 @@ const App = () => (
             <Route
               path="files"
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Files />
                 </AuthGuard>
               }
@@ -81,7 +81,7 @@ const App = () => (
             <Route
               path="calendar"
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Calendar />
                 </AuthGuard>
               }
@@ -89,7 +89,7 @@ const App = () => (
             <Route
               path="items"
               element={
-                <AuthGuard requireAdmin>
+                <AuthGuard>
                   <Items />
                 </AuthGuard>
               }
