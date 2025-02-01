@@ -6,7 +6,7 @@ import ChatUserItem from "./chat/ChatUserItem";
 import ChatSearch from "./chat/ChatSearch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ChatUser } from "@/types/chat";
+import { ChatUser, ChatRoom } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 import { chatService } from "@/services/chatService";
 import { useAuth } from "@/hooks/useAuth";
