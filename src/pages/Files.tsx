@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import FileCard from "@/components/files/FileCard";
 import FileHeader from "@/components/files/FileHeader";
+import { Input } from "@/components/ui/input";
 
 interface File {
   id: string;
@@ -22,6 +23,7 @@ const Files = () => {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useState<HTMLInputElement | null>(null);
 
   const { data: files = [], isLoading } = useQuery({
     queryKey: ['files', currentFolderId],
@@ -40,6 +42,63 @@ const Files = () => {
       
       if (error) throw error;
       return data;
+    }
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async (files: FileList) => {
+      const uploadedFiles = [];
+      
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${crypto.randomUUID()}.${fileExt}`;
+        
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from('public')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('public')
+          .getPublicUrl(filePath);
+
+        // Insert file record
+        const { data, error: dbError } = await supabase
+          .from('files')
+          .insert({
+            name: file.name,
+            file_type: file.type,
+            size: file.size,
+            file_url: publicUrl,
+            folder_id: currentFolderId,
+            is_folder: false
+          })
+          .select()
+          .single();
+
+        if (dbError) throw dbError;
+        uploadedFiles.push(data);
+      }
+      
+      return uploadedFiles;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', currentFolderId] });
+      toast({
+        title: "Success",
+        description: "Files uploaded successfully"
+      });
+    },
+    onError: (error) => {
+      console.error('Error uploading files:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload files",
+        variant: "destructive"
+      });
     }
   });
 
@@ -62,60 +121,15 @@ const Files = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', currentFolderId] });
       toast({
-        title: "Folder created",
-        description: "The folder has been successfully created.",
-      });
-    }
-  });
-
-  const moveFileMutation = useMutation({
-    mutationFn: async ({ fileId, targetFolderId }: { fileId: string; targetFolderId: string | null }) => {
-      const { error } = await supabase
-        .from('files')
-        .update({ folder_id: targetFolderId })
-        .eq('id', fileId);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files'] });
-      toast({
-        title: "File moved",
-        description: "The file has been successfully moved.",
-      });
-    }
-  });
-
-  const deleteFileMutation = useMutation({
-    mutationFn: async (fileId: string) => {
-      // First, delete any chat messages referencing this file
-      const { error: chatMessagesError } = await supabase
-        .from('chat_messages')
-        .delete()
-        .eq('file_id', fileId);
-      
-      if (chatMessagesError) throw chatMessagesError;
-
-      // Then delete the file itself
-      const { error: fileError } = await supabase
-        .from('files')
-        .delete()
-        .eq('id', fileId);
-      
-      if (fileError) throw fileError;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files', currentFolderId] });
-      toast({
-        title: "File deleted",
-        description: "The file has been successfully deleted.",
+        title: "Success",
+        description: "Folder created successfully"
       });
     },
     onError: (error) => {
-      console.error('Error deleting file:', error);
+      console.error('Error creating folder:', error);
       toast({
         title: "Error",
-        description: "Failed to delete file. Please try again.",
+        description: "Failed to create folder",
         variant: "destructive"
       });
     }
@@ -128,16 +142,49 @@ const Files = () => {
     }
   };
 
+  const handleAddFiles = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        uploadFileMutation.mutate(files);
+      }
+    };
+    input.click();
+  };
+
   const handleDownload = (fileUrl: string) => {
     window.open(fileUrl, '_blank');
     toast({
       title: "Download started",
-      description: "Your file is being downloaded...",
+      description: "Your file is being downloaded..."
     });
   };
 
-  const handleDelete = (fileId: string) => {
-    deleteFileMutation.mutate(fileId);
+  const handleDelete = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        .delete()
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['files', currentFolderId] });
+      toast({
+        title: "Success",
+        description: "File deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete file",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDragStart = (e: React.DragEvent, fileId: string) => {
@@ -149,18 +196,58 @@ const Files = () => {
     e.stopPropagation();
   };
 
-  const handleDrop = (e: React.DragEvent, targetFolderId: string) => {
+  const handleDrop = async (e: React.DragEvent, targetFolderId: string) => {
     e.preventDefault();
     e.stopPropagation();
     
     const fileId = e.dataTransfer.getData('fileId');
     if (fileId && fileId !== targetFolderId) {
-      moveFileMutation.mutate({ fileId, targetFolderId });
+      try {
+        const { error } = await supabase
+          .from('files')
+          .update({ folder_id: targetFolderId })
+          .eq('id', fileId);
+
+        if (error) throw error;
+
+        queryClient.invalidateQueries({ queryKey: ['files'] });
+        toast({
+          title: "Success",
+          description: "File moved successfully"
+        });
+      } catch (error) {
+        console.error('Error moving file:', error);
+        toast({
+          title: "Error",
+          description: "Failed to move file",
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const handleMoveToRoot = (fileId: string) => {
-    moveFileMutation.mutate({ fileId, targetFolderId: null });
+  const handleMoveToRoot = async (fileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('files')
+        .update({ folder_id: null })
+        .eq('id', fileId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['files'] });
+      toast({
+        title: "Success",
+        description: "File moved to root successfully"
+      });
+    } catch (error) {
+      console.error('Error moving file to root:', error);
+      toast({
+        title: "Error",
+        description: "Failed to move file to root",
+        variant: "destructive"
+      });
+    }
   };
 
   const filteredFiles = files.filter((file) =>
@@ -176,7 +263,7 @@ const Files = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onCreateFolder={handleCreateFolder}
-          onAddFiles={() => {}}
+          onAddFiles={handleAddFiles}
           onBack={() => setCurrentFolderId(null)}
         />
 
