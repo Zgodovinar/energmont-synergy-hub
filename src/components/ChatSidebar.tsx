@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
-import { ScrollArea } from "./ui/scroll-area";
-import { Plus, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatUserItem from "./chat/ChatUserItem";
 import ChatSearch from "./chat/ChatSearch";
@@ -12,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { chatService } from "@/services/chatService";
 import { useAuth } from "@/hooks/useAuth";
 import AddChatDialog from "./chat/AddChatDialog";
-import ChatRoomItem from "./chat/ChatRoomItem";
 import ChatList from "./chat/ChatList";
 
 interface ChatSidebarProps {
@@ -124,7 +122,6 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
   const handleDeleteRoom = async (roomId: string) => {
     try {
-      // First delete all messages in the room
       const { error: messagesError } = await supabase
         .from('chat_messages')
         .delete()
@@ -132,7 +129,6 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       if (messagesError) throw messagesError;
 
-      // Then delete all participants
       const { error: participantsError } = await supabase
         .from('chat_room_participants')
         .delete()
@@ -140,7 +136,6 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       if (participantsError) throw participantsError;
 
-      // Finally delete the room itself
       const { error: roomError } = await supabase
         .from('chat_rooms')
         .delete()
@@ -148,12 +143,10 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       if (roomError) throw roomError;
 
-      // If the deleted room was selected, clear the selection
       if (selectedRoomId === roomId) {
         onRoomSelect('');
       }
 
-      // Invalidate the chat rooms query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
 
       toast({
@@ -185,6 +178,10 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
   const allItems = [...filteredRooms, ...filteredWorkers];
 
+  const handleRoomSelect = (room: ChatRoom) => {
+    onRoomSelect(room.id);
+  };
+
   return (
     <div className="w-80 border-r flex flex-col">
       <div className="p-4 border-b">
@@ -208,7 +205,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
         <ChatList
           items={allItems}
           selectedRoomId={selectedRoomId}
-          onRoomSelect={onRoomSelect}
+          onRoomSelect={handleRoomSelect}
           onUserSelect={handleUserSelect}
           onRoomDelete={handleDeleteRoom}
         />

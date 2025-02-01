@@ -11,7 +11,13 @@ interface ChatListProps {
   onRoomDelete: (roomId: string) => void;
 }
 
-const ChatList = ({ items, selectedRoomId, onRoomSelect, onUserSelect, onRoomDelete }: ChatListProps) => {
+const ChatList = ({ 
+  items, 
+  selectedRoomId, 
+  onRoomSelect, 
+  onUserSelect, 
+  onRoomDelete 
+}: ChatListProps) => {
   return (
     <ScrollArea className="h-[calc(100vh-12rem)]">
       <div className="p-4 space-y-4">
@@ -21,7 +27,7 @@ const ChatList = ({ items, selectedRoomId, onRoomSelect, onUserSelect, onRoomDel
               <ChatUserItem
                 key={`user-${item.id}`}
                 user={item}
-                onClick={onUserSelect}
+                onClick={() => onUserSelect(item)}
               />
             );
           } else {
@@ -31,7 +37,7 @@ const ChatList = ({ items, selectedRoomId, onRoomSelect, onUserSelect, onRoomDel
                 room={item}
                 isSelected={item.id === selectedRoomId}
                 onClick={() => onRoomSelect(item)}
-                onDelete={onRoomDelete}
+                onDelete={() => onRoomDelete(item.id)}
               />
             );
           }
