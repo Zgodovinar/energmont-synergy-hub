@@ -1,3 +1,8 @@
+import DashboardMetrics from "@/components/DashboardMetrics";
+import WorkersList from "@/components/WorkersList";
+import ProjectsList from "@/components/ProjectsList";
+import AnalyticsChart from "@/components/AnalyticsChart";
+
 const Index = () => {
   return (
     <>
