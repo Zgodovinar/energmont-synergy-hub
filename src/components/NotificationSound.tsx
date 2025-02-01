@@ -39,9 +39,9 @@ const NotificationSound = () => {
     }
   };
 
-  // Initialize audio with user interaction
+  // Initialize audio
   useEffect(() => {
-    const initializeAudio = async () => {
+    const initializeAudio = () => {
       try {
         if (!audioRef.current) return;
         
@@ -54,28 +54,28 @@ const NotificationSound = () => {
         if (urlData?.publicUrl) {
           console.log('Setting notification sound URL:', urlData.publicUrl);
           audioRef.current.src = urlData.publicUrl;
-          
-          // Test if audio can be loaded
-          await audioRef.current.load();
-          // Set volume to 50%
           audioRef.current.volume = 0.5;
-          
-          try {
-            // Try to play a silent test to handle autoplay policy
-            await audioRef.current.play();
-            // Immediately pause after successful play
-            audioRef.current.pause();
-            audioRef.current.currentTime = 0;
-          } catch (e) {
-            console.log('Autoplay prevented, waiting for user interaction:', e);
-          }
+          audioRef.current.load();
         }
       } catch (error) {
         console.error('Error initializing audio:', error);
       }
     };
 
+    // Initialize audio when component mounts
     initializeAudio();
+
+    // Add click listener to initialize audio after user interaction
+    const handleUserInteraction = () => {
+      initializeAudio();
+      document.removeEventListener('click', handleUserInteraction);
+    };
+
+    document.addEventListener('click', handleUserInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+    };
   }, []);
 
   useEffect(() => {
@@ -102,15 +102,15 @@ const NotificationSound = () => {
             console.log('Attempting to play notification sound...');
             audio.currentTime = 0;
             audio.play().catch(error => {
-              console.error('Error playing notification sound:', error);
+              console.warn('Could not play notification sound:', error);
             });
           }
 
-          // Show toast notification with longer duration
+          // Show toast notification
           toast({
             title: `${getSourceIcon(payload.new.source)} ${payload.new.title}`,
             description: payload.new.message,
-            duration: 5000, // Show for 5 seconds
+            duration: 5000,
             variant: "default",
           });
         }
