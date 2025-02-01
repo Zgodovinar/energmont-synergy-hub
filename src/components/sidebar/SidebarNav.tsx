@@ -22,7 +22,7 @@ export const SidebarNav = ({ isAdmin, signOut }: SidebarNavProps) => {
   });
 
   return (
-    <div className="px-3 py-2 transition-all duration-200">
+    <div className="transition-all duration-200">
       <nav className="space-y-1">
         {visibleMenuItems.map((item) => {
           if (item.adminOnly && !isAdmin) return null;
