@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -12,10 +13,18 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading) {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        // Clear any stale session data
+        await supabase.auth.signOut();
         navigate("/auth");
-      } else if (requireAdmin && userRole !== "admin") {
+      }
+    };
+
+    if (!isLoading) {
+      checkSession();
+      if (requireAdmin && userRole !== "admin") {
         navigate("/");
       }
     }
