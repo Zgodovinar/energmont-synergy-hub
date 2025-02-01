@@ -22,22 +22,23 @@ const ChatList = ({
     <ScrollArea className="h-[calc(100vh-12rem)]">
       <div className="p-4 space-y-4">
         {items.map((item) => {
-          if ('role' in item) {
+          if ('role' in item && !('type' in item)) {
             return (
               <ChatUserItem
                 key={`user-${item.id}`}
                 user={item}
-                onClick={() => onUserSelect(item)}
+                onClick={onUserSelect}
               />
             );
           } else {
+            const roomItem = item as ChatRoom;
             return (
               <ChatRoomItem
-                key={`room-${item.id}`}
-                room={item}
-                isSelected={item.id === selectedRoomId}
-                onClick={() => onRoomSelect(item)}
-                onDelete={() => onRoomDelete(item.id)}
+                key={`room-${roomItem.id}`}
+                room={roomItem}
+                isSelected={roomItem.id === selectedRoomId}
+                onClick={() => onRoomSelect(roomItem)}
+                onDelete={onRoomDelete}
               />
             );
           }

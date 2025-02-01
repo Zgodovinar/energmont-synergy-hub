@@ -14,8 +14,8 @@ const ChatSidebar = ({ selectedRoom, onRoomSelect }: ChatSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const {
-    rooms,
-    isLoading,
+    chatRooms,
+    isLoadingRooms,
     createRoom,
     deleteRoom
   } = useChatRooms();
@@ -54,11 +54,11 @@ const ChatSidebar = ({ selectedRoom, onRoomSelect }: ChatSidebarProps) => {
     }
   };
 
-  const filteredRooms = rooms?.filter((room) =>
+  const filteredRooms = chatRooms?.filter((room) =>
     room.name.toLowerCase().includes(searchQuery.toLowerCase())
   ) ?? [];
 
-  if (isLoading) {
+  if (isLoadingRooms) {
     return (
       <div className="w-80 border-r h-screen p-4">
         <p>Loading chats...</p>

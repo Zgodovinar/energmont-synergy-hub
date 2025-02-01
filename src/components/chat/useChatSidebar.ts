@@ -35,7 +35,7 @@ export const useChatSidebar = (rooms: ChatRoom[], onRoomSelect: (room: ChatRoom)
     : [...rooms, ...initialUsers.filter(user => 
         !rooms.some(room => 
           room.type === 'direct' && 
-          room.participants.some(p => p.id === user.id)
+          room.participants.some(p => p.worker_id === user.id)
         )
       )];
 
@@ -43,7 +43,7 @@ export const useChatSidebar = (rooms: ChatRoom[], onRoomSelect: (room: ChatRoom)
     const existingRoom = rooms.find(
       room => room.type === 'direct' && 
       room.participants.length === 2 && 
-      room.participants.some(p => p.id === user.id)
+      room.participants.some(p => p.worker_id === user.id)
     );
 
     if (existingRoom) {
@@ -52,19 +52,22 @@ export const useChatSidebar = (rooms: ChatRoom[], onRoomSelect: (room: ChatRoom)
     }
 
     const currentUser: ChatParticipant = {
-      id: 'c1c3d45e-6789-4abc-def0-123456789abc',
+      room_id: crypto.randomUUID(),
+      worker_id: 'c1c3d45e-6789-4abc-def0-123456789abc',
+      joined_at: new Date().toISOString(),
       name: 'Current User'
     };
 
     const selectedUser: ChatParticipant = {
-      id: user.id,
+      room_id: currentUser.room_id,
+      worker_id: user.id,
+      joined_at: new Date().toISOString(),
       name: user.name,
-      avatar: user.avatar,
-      status: user.status
+      avatar: user.avatar
     };
 
     const newRoom: ChatRoom = {
-      id: crypto.randomUUID(),
+      id: currentUser.room_id,
       name: user.name,
       type: 'direct',
       participants: [currentUser, selectedUser],

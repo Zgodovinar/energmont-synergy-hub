@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ interface AddChatDialogProps {
 }
 
 const AddChatDialog = ({ children, onSave }: AddChatDialogProps) => {
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   const { toast } = useToast();
@@ -43,64 +44,10 @@ const AddChatDialog = ({ children, onSave }: AddChatDialogProps) => {
     if (!name.trim() || selectedWorkers.length === 0) return;
 
     try {
-      // Get current user's worker record
-      const currentUser = await supabase.auth.getUser();
-      if (!currentUser.data.user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to create a chat",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Create the chat room
-      const { data: room, error: roomError } = await supabase
-        .from('chat_rooms')
-        .insert({
-          name: name.trim(),
-          type: 'group'
-        })
-        .select()
-        .single();
-
-      if (roomError) throw roomError;
-
-      // Get or create admin worker record
-      const { data: adminWorker } = await supabase
-        .from('workers')
-        .select()
-        .eq('email', currentUser.data.user.email)
-        .single();
-
-      // Add participants including the creator
-      const participants = [
-        { room_id: room.id, worker_id: adminWorker.id },
-        ...selectedWorkers.map(workerId => ({
-          room_id: room.id,
-          worker_id: workerId
-        }))
-      ];
-
-      const { error: participantsError } = await supabase
-        .from('chat_room_participants')
-        .insert(participants);
-
-      if (participantsError) {
-        // Clean up the created room if adding participants fails
-        await supabase.from('chat_rooms').delete().eq('id', room.id);
-        throw participantsError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Group chat created successfully"
-      });
-
+      await onSave(name.trim(), selectedWorkers);
       setName("");
       setSelectedWorkers([]);
-      onOpenChange(false);
-      onRoomSelect(room.id);
+      setOpen(false);
     } catch (error) {
       console.error('Error creating group chat:', error);
       toast({
@@ -112,7 +59,10 @@ const AddChatDialog = ({ children, onSave }: AddChatDialogProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Group Chat</DialogTitle>
@@ -168,7 +118,7 @@ const AddChatDialog = ({ children, onSave }: AddChatDialogProps) => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => setOpen(false)}
             >
               Cancel
             </Button>
