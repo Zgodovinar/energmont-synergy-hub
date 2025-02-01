@@ -57,14 +57,15 @@ const NotificationSound = () => {
         return;
       }
 
-      const { data } = await supabase
+      // Get the public URL directly
+      const { data: urlData } = supabase
         .storage
         .from('public')
         .getPublicUrl('sounds/notification.mp3');
       
-      if (data?.publicUrl && audioRef.current) {
-        console.log('Setting notification sound URL:', data.publicUrl);
-        audioRef.current.src = data.publicUrl;
+      if (urlData?.publicUrl && audioRef.current) {
+        console.log('Setting notification sound URL:', urlData.publicUrl);
+        audioRef.current.src = urlData.publicUrl;
         
         // Test if audio can be loaded
         audioRef.current.load();
