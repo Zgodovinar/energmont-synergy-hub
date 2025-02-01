@@ -43,19 +43,28 @@ const NotificationSound = () => {
     // Get the notification sound URL from Supabase storage
     const getNotificationSound = async () => {
       console.log('Fetching notification sound URL...');
-      const { data, error } = await supabase
+      
+      // First, list files to debug
+      const { data: files, error: listError } = await supabase
         .storage
         .from('public')
-        .createSignedUrl('sounds/notification.mp3', 3600);
+        .list('sounds');
       
-      if (error) {
-        console.error('Error getting notification sound URL:', error);
+      console.log('Files in sounds folder:', files);
+      
+      if (listError) {
+        console.error('Error listing files:', listError);
         return;
       }
+
+      const { data } = await supabase
+        .storage
+        .from('public')
+        .getPublicUrl('sounds/notification.mp3');
       
-      if (data?.signedUrl && audioRef.current) {
-        console.log('Setting notification sound URL:', data.signedUrl);
-        audioRef.current.src = data.signedUrl;
+      if (data?.publicUrl && audioRef.current) {
+        console.log('Setting notification sound URL:', data.publicUrl);
+        audioRef.current.src = data.publicUrl;
         
         // Test if audio can be loaded
         audioRef.current.load();
