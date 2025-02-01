@@ -33,10 +33,18 @@ const Files = () => {
   const { data: files = [], isLoading } = useQuery({
     queryKey: ['files', currentFolderId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const query = supabase
         .from('files')
-        .select('*')
-        .eq('folder_id', currentFolderId);
+        .select('*');
+      
+      // Use .is() for null checks instead of .eq()
+      if (currentFolderId === null) {
+        query.is('folder_id', null);
+      } else {
+        query.eq('folder_id', currentFolderId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
