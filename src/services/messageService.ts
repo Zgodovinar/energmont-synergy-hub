@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { SendMessageParams } from "@/types/chat";
+import { notificationService } from "./notificationService";
 
 export const messageService = {
-  fetchMessages: async (roomId: string) => {
+  async fetchMessages(roomId: string) {
     console.log('Fetching messages for room:', roomId);
     const { data, error } = await supabase
       .from('chat_messages')
@@ -22,10 +22,10 @@ export const messageService = {
     return data;
   },
 
-  sendMessage: async (roomId: string, senderId: string, content: string, fileId?: string) => {
+  async sendMessage(roomId: string, senderId: string, content: string, fileId?: string) {
     console.log('Sending message:', { roomId, senderId, content, fileId });
     
-    // First, get the room participants excluding the sender
+    // Get the room participants excluding the sender
     const { data: participants, error: participantsError } = await supabase
       .from('chat_room_participants')
       .select('worker_id')
@@ -57,48 +57,14 @@ export const messageService = {
 
     if (messageError) throw messageError;
 
-    // For each participant, check if they already have an unread notification for this chat
-    for (const participant of participants) {
-      const { data: existingNotif, error: notifError } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('recipient_id', participant.worker_id)
-        .eq('source', 'chat')
-        .eq('read', false)
-        .ilike('title', `New message from ${sender.name}%`)
-        .maybeSingle(); // Changed from single() to maybeSingle()
-
-      // Only throw error if it's not a "no rows returned" error
-      if (notifError && notifError.code !== 'PGRST116') {
-        throw notifError;
-      }
-
-      if (existingNotif) {
-        // Update existing notification
-        const { error: updateError } = await supabase
-          .from('notifications')
-          .update({
-            message: `You have new unread messages from ${sender.name}`,
-            created_at: new Date().toISOString() // Update timestamp to bring it to top
-          })
-          .eq('id', existingNotif.id);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new notification
-        const { error: insertError } = await supabase
-          .from('notifications')
-          .insert({
-            recipient_id: participant.worker_id,
-            title: `New message from ${sender.name}`,
-            message: content.length > 50 ? content.substring(0, 47) + '...' : content,
-            source: 'chat',
-            read: false
-          });
-
-        if (insertError) throw insertError;
-      }
-    }
+    // Create notifications for participants
+    await Promise.all(participants.map(participant => 
+      notificationService.createOrUpdateChatNotification(
+        participant.worker_id,
+        sender.name,
+        content
+      )
+    ));
 
     return message;
   }

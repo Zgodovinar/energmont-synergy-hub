@@ -2,17 +2,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const workerService = {
   async getOrCreateAdminWorker(email: string): Promise<string> {
-    console.log('Getting or creating admin worker for:', email);
+    console.log('Getting or creating admin worker for email:', email);
     
-    const { data: existingWorker, error: workerError } = await supabase
+    const { data: existingWorker, error: fetchError } = await supabase
       .from('workers')
       .select('id')
       .eq('email', email)
       .maybeSingle();
 
-    if (workerError) {
-      console.error('Error checking worker:', workerError);
-      throw new Error('Failed to check worker status');
+    if (fetchError) {
+      console.error('Error fetching worker:', fetchError);
+      throw fetchError;
     }
 
     if (existingWorker) {
@@ -23,17 +23,17 @@ export const workerService = {
     const { data: newWorker, error: createError } = await supabase
       .from('workers')
       .insert({
-        name: 'Admin',
-        role: 'Admin',
-        email: email,
+        email,
+        name: email.split('@')[0],
+        role: 'admin',
         status: 'active'
       })
       .select()
       .single();
 
     if (createError) {
-      console.error('Error creating admin worker:', createError);
-      throw new Error('Failed to create admin worker');
+      console.error('Error creating worker:', createError);
+      throw createError;
     }
 
     console.log('Created new admin worker:', newWorker.id);

@@ -13,6 +13,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { notificationService } from "@/services/notificationService";
 
 interface CreateEventDialogProps {
   isOpen: boolean;
@@ -30,7 +31,8 @@ export function CreateEventDialog({ isOpen, onClose, startTime, endTime }: Creat
     e.preventDefault();
     
     try {
-      const { data, error } = await supabase
+      // Create the event
+      const { data: event, error } = await supabase
         .from("calendar_events")
         .insert([
           {
@@ -44,6 +46,24 @@ export function CreateEventDialog({ isOpen, onClose, startTime, endTime }: Creat
         .single();
 
       if (error) throw error;
+
+      // Get all workers to notify them
+      const { data: workers, error: workersError } = await supabase
+        .from('workers')
+        .select('id');
+
+      if (workersError) throw workersError;
+
+      // Create notifications for all workers
+      await Promise.all(
+        workers.map(worker =>
+          notificationService.createCalendarNotification(
+            worker.id,
+            title,
+            startTime
+          )
+        )
+      );
 
       toast({
         title: "Event created",
