@@ -84,7 +84,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
       return rooms.map(room => ({
         id: room.id,
         name: room.name,
-        type: room.type,
+        type: room.type as "direct" | "group", // Type assertion here
         participants: room.chat_room_participants.map((p: any) => ({
           id: p.worker.id,
           name: p.worker.name,
