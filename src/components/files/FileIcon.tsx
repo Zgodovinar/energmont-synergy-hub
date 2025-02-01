@@ -1,4 +1,4 @@
-import { FileText, Image, FileSpreadsheet, FileCode, File } from "lucide-react";
+import { FileText, Image, FileSpreadsheet, FileCode, File, Folder } from "lucide-react";
 
 interface FileIconProps {
   fileType: string | null;
@@ -6,6 +6,11 @@ interface FileIconProps {
 }
 
 const FileIcon = ({ fileType, className = "h-8 w-8" }: FileIconProps) => {
+  // Handle folder type first
+  if (fileType === 'folder') {
+    return <Folder className={`${className} text-blue-500`} />;
+  }
+
   // Helper function to get MIME type category
   const getFileCategory = (type: string | null) => {
     if (!type) return 'unknown';

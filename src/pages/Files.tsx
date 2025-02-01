@@ -1,18 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { Search, Plus, Download, Trash, FolderPlus, ArrowLeft, Folder } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import FileIcon from "@/components/files/FileIcon";
+import FileCard from "@/components/files/FileCard";
+import FileHeader from "@/components/files/FileHeader";
 
 interface File {
   id: string;
@@ -59,7 +51,7 @@ const Files = () => {
           name: folderName,
           is_folder: true,
           folder_id: currentFolderId,
-          file_url: '', // Required field but not used for folders
+          file_url: '',
         })
         .select()
         .single();
@@ -72,6 +64,24 @@ const Files = () => {
       toast({
         title: "Folder created",
         description: "The folder has been successfully created.",
+      });
+    }
+  });
+
+  const moveFileMutation = useMutation({
+    mutationFn: async ({ fileId, targetFolderId }: { fileId: string; targetFolderId: string }) => {
+      const { error } = await supabase
+        .from('files')
+        .update({ folder_id: targetFolderId })
+        .eq('id', fileId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files'] });
+      toast({
+        title: "File moved",
+        description: "The file has been successfully moved to the folder.",
       });
     }
   });
@@ -113,105 +123,54 @@ const Files = () => {
     deleteFileMutation.mutate(fileId);
   };
 
-  const handleFolderClick = (folderId: string) => {
-    setCurrentFolderId(folderId);
+  const handleDragStart = (e: React.DragEvent, fileId: string) => {
+    e.dataTransfer.setData('fileId', fileId);
   };
 
-  const handleBackClick = () => {
-    setCurrentFolderId(null);
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent, targetFolderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const fileId = e.dataTransfer.getData('fileId');
+    if (fileId && fileId !== targetFolderId) {
+      moveFileMutation.mutate({ fileId, targetFolderId });
+    }
   };
 
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderFilePreview = (file: File) => {
-    if (file.is_folder) {
-      return <Folder className="h-8 w-8 text-blue-500" />;
-    }
-    
-    if (file.file_type?.startsWith('image/')) {
-      return (
-        <div className="w-full h-24 mb-2">
-          <img
-            src={file.file_url}
-            alt={file.name}
-            className="w-full h-full object-cover rounded"
-          />
-        </div>
-      );
-    }
-
-    return <FileIcon fileType={file.file_type} />;
-  };
-
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 ml-64 p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            {currentFolderId && (
-              <Button variant="outline" onClick={handleBackClick}>
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
-            )}
-            <h1 className="text-3xl font-bold">Files</h1>
-          </div>
-          <div className="flex gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search files..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-64"
-              />
-            </div>
-            <Button onClick={handleCreateFolder}>
-              <FolderPlus className="mr-2 h-4 w-4" /> New Folder
-            </Button>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Files
-            </Button>
-          </div>
-        </div>
+        <FileHeader
+          currentFolderId={currentFolderId}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onCreateFolder={handleCreateFolder}
+          onAddFiles={() => {}}
+          onBack={() => setCurrentFolderId(null)}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredFiles.map((file) => (
-            <ContextMenu key={file.id}>
-              <ContextMenuTrigger>
-                <div 
-                  className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => file.is_folder && handleFolderClick(file.id)}
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    {renderFilePreview(file)}
-                    <h3 className="font-medium text-center">{file.name}</h3>
-                  </div>
-                  {!file.is_folder && (
-                    <div className="mt-2 text-sm text-gray-500 text-center">
-                      <p>{file.file_type}</p>
-                      <p>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      <p>{new Date(file.created_at).toLocaleDateString()}</p>
-                    </div>
-                  )}
-                </div>
-              </ContextMenuTrigger>
-              <ContextMenuContent>
-                {!file.is_folder && (
-                  <ContextMenuItem onClick={() => handleDownload(file.file_url)}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </ContextMenuItem>
-                )}
-                <ContextMenuItem onClick={() => handleDelete(file.id)}>
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </ContextMenuItem>
-              </ContextMenuContent>
-            </ContextMenu>
+            <FileCard
+              key={file.id}
+              file={file}
+              onFolderClick={(folderId) => setCurrentFolderId(folderId)}
+              onDownload={handleDownload}
+              onDelete={handleDelete}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            />
           ))}
         </div>
       </main>
