@@ -112,9 +112,40 @@ export const useChatRooms = () => {
     }
   });
 
+  const deleteRoomMutation = useMutation({
+    mutationFn: async (roomId: string) => {
+      console.log('Deleting chat room:', roomId);
+      const { error } = await supabase
+        .from('chat_rooms')
+        .delete()
+        .eq('id', roomId);
+
+      if (error) {
+        console.error('Error deleting chat room:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+      toast({
+        title: "Success",
+        description: "Chat room deleted successfully"
+      });
+    },
+    onError: (error) => {
+      console.error('Error in deleteRoom mutation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chat room",
+        variant: "destructive"
+      });
+    }
+  });
+
   return {
     chatRooms,
     isLoadingRooms,
-    createRoom: createRoomMutation.mutateAsync
+    createRoom: createRoomMutation.mutateAsync,
+    deleteRoom: deleteRoomMutation.mutateAsync
   };
 };
