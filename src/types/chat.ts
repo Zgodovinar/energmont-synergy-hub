@@ -2,13 +2,22 @@ export interface ChatRoom {
   id: string;
   name: string;
   type: 'direct' | 'group';
-  participants?: ChatParticipant[];
+  participants: ChatParticipant[];
+  lastMessageTime?: Date;
+  lastMessage?: string;
+  userInfo?: {
+    isOnline?: boolean;
+    role?: string;
+  };
 }
 
 export interface ChatParticipant {
   room_id: string;
   worker_id: string;
   joined_at: string;
+  id?: string; // For backwards compatibility
+  name?: string;
+  avatar?: string;
 }
 
 export interface ChatMessage {
@@ -17,6 +26,7 @@ export interface ChatMessage {
   sender_id: string;
   content: string;
   created_at: string;
+  seen?: boolean;
   sender?: {
     id: string;
     name: string;
@@ -28,4 +38,26 @@ export interface ChatMessage {
     file_url: string;
     file_type?: string;
   };
+}
+
+export interface ChatUser {
+  id: string;
+  name: string;
+  role?: string;
+  isOnline?: boolean;
+  avatar?: string;
+  status?: string;
+}
+
+export interface SendMessageParams {
+  roomId: string;
+  content: string;
+  fileId?: string;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  timestamp: Date;
 }

@@ -31,11 +31,17 @@ export const useChatRooms = () => {
         name: room.name,
         type: room.type as 'direct' | 'group',
         participants: room.participants.map((p: any) => ({
-          id: p.worker.id,
+          room_id: room.id,
+          worker_id: p.worker.id,
+          joined_at: new Date().toISOString(),
           name: p.worker.name,
           avatar: p.worker.image_url
         })),
-        lastMessageTime: new Date(room.created_at)
+        lastMessageTime: new Date(room.created_at),
+        userInfo: room.type === 'direct' ? {
+          isOnline: false,
+          role: room.participants[0]?.worker?.role
+        } : undefined
       })) as ChatRoom[];
     }
   });

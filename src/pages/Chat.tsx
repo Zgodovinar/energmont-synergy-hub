@@ -2,9 +2,10 @@ import Sidebar from "@/components/Sidebar";
 import ChatSidebar from "@/components/ChatSidebar";
 import ChatWindow from "@/components/ChatWindow";
 import { useState } from "react";
+import { ChatRoom } from "@/types/chat";
 
 const Chat = () => {
-  const [selectedRoomId, setSelectedRoomId] = useState<string>();
+  const [selectedRoom, setSelectedRoom] = useState<ChatRoom>();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -13,10 +14,10 @@ const Chat = () => {
         <h1 className="text-3xl font-bold mb-8">Chat</h1>
         <div className="flex h-[calc(100vh-12rem)] bg-white rounded-lg shadow-sm">
           <ChatSidebar
-            selectedRoomId={selectedRoomId}
-            onRoomSelect={setSelectedRoomId}
+            selectedRoom={selectedRoom}
+            onRoomSelect={setSelectedRoom}
           />
-          <ChatWindow roomId={selectedRoomId} />
+          <ChatWindow roomId={selectedRoom?.id} />
         </div>
       </main>
     </div>

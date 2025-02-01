@@ -11,12 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AddChatDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onRoomSelect: (roomId: string) => void;
+  children?: React.ReactNode;
+  onSave: (name: string, participantIds: string[]) => void;
 }
 
-const AddChatDialog = ({ open, onOpenChange, onRoomSelect }: AddChatDialogProps) => {
+const AddChatDialog = ({ children, onSave }: AddChatDialogProps) => {
   const [name, setName] = useState("");
   const [selectedWorkers, setSelectedWorkers] = useState<string[]>([]);
   const { toast } = useToast();
