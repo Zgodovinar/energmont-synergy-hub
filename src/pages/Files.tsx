@@ -12,6 +12,7 @@ import { Search, Plus, Download, Trash, FolderPlus, ArrowLeft, Folder } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import FileIcon from "@/components/files/FileIcon";
 
 interface File {
   id: string;
@@ -37,7 +38,6 @@ const Files = () => {
         .from('files')
         .select('*');
       
-      // Use .is() for null checks instead of .eq()
       if (currentFolderId === null) {
         query.is('folder_id', null);
       } else {
@@ -125,6 +125,26 @@ const Files = () => {
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const renderFilePreview = (file: File) => {
+    if (file.is_folder) {
+      return <Folder className="h-8 w-8 text-blue-500" />;
+    }
+    
+    if (file.file_type?.startsWith('image/')) {
+      return (
+        <div className="w-full h-24 mb-2">
+          <img
+            src={file.file_url}
+            alt={file.name}
+            className="w-full h-full object-cover rounded"
+          />
+        </div>
+      );
+    }
+
+    return <FileIcon fileType={file.file_type} />;
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
@@ -158,7 +178,7 @@ const Files = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredFiles.map((file) => (
             <ContextMenu key={file.id}>
               <ContextMenuTrigger>
@@ -166,21 +186,16 @@ const Files = () => {
                   className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => file.is_folder && handleFolderClick(file.id)}
                 >
-                  <div className="flex items-center gap-2">
-                    {file.is_folder ? (
-                      <Folder className="h-5 w-5 text-blue-500" />
-                    ) : null}
-                    <h3 className="font-medium">{file.name}</h3>
+                  <div className="flex flex-col items-center gap-2">
+                    {renderFilePreview(file)}
+                    <h3 className="font-medium text-center">{file.name}</h3>
                   </div>
                   {!file.is_folder && (
-                    <>
-                      <p className="text-sm text-gray-500">
-                        {file.file_type} • {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        {new Date(file.created_at).toLocaleDateString()}
-                      </p>
-                    </>
+                    <div className="mt-2 text-sm text-gray-500 text-center">
+                      <p>{file.file_type}</p>
+                      <p>{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p>{new Date(file.created_at).toLocaleDateString()}</p>
+                    </div>
                   )}
                 </div>
               </ContextMenuTrigger>
