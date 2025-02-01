@@ -521,7 +521,15 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workers_email_fkey"
+            columns: ["email"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["email"]
+          },
+        ]
       }
     }
     Views: {
