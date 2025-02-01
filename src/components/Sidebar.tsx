@@ -7,12 +7,10 @@ const Sidebar = () => {
   const { isAdmin, signOut } = useAuth();
 
   return (
-    <div className="flex flex-col h-full bg-background border-r">
+    <div className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background">
       <SidebarLogo />
-      <ScrollArea className="flex-1">
-        <div className="px-3 py-2">
-          <SidebarNav isAdmin={isAdmin} signOut={signOut} />
-        </div>
+      <ScrollArea className="h-[calc(100vh-4rem)]">
+        <SidebarNav isAdmin={isAdmin} signOut={signOut} />
       </ScrollArea>
     </div>
   );

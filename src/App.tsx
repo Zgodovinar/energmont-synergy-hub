@@ -4,7 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AuthGuard from "./components/AuthGuard";
-import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Workers from "./pages/Workers";
 import Projects from "./pages/Projects";
@@ -29,77 +28,84 @@ const App = () => (
           <Route
             path="/"
             element={
-              <AuthGuard>
-                <Layout />
+              <AuthGuard requireAdmin>
+                <Index />
               </AuthGuard>
             }
-          >
-            <Route
-              index
-              element={
-                <AuthGuard>
-                  <Index />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="workers"
-              element={
-                <AuthGuard>
-                  <Workers />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="projects"
-              element={
-                <AuthGuard>
-                  <Projects />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="analytics"
-              element={
-                <AuthGuard>
-                  <Analytics />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="chat"
-              element={<Chat />}
-            />
-            <Route
-              path="files"
-              element={
-                <AuthGuard>
-                  <Files />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="calendar"
-              element={
-                <AuthGuard>
-                  <Calendar />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="items"
-              element={
-                <AuthGuard>
-                  <Items />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="notifications"
-              element={<Notifications />}
-            />
-            <Route path="*" element={<Navigate to="/chat" replace />} />
-          </Route>
+          />
+          <Route
+            path="/workers"
+            element={
+              <AuthGuard requireAdmin>
+                <Workers />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <AuthGuard requireAdmin>
+                <Projects />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <AuthGuard requireAdmin>
+                <Analytics />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <AuthGuard>
+                <Chat />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/files"
+            element={
+              <AuthGuard requireAdmin>
+                <Files />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <AuthGuard requireAdmin>
+                <Calendar />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/items"
+            element={
+              <AuthGuard requireAdmin>
+                <Items />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <AuthGuard>
+                <Notifications />
+              </AuthGuard>
+            }
+          />
+          {/* Redirect workers to chat page by default */}
+          <Route
+            path="*"
+            element={
+              <AuthGuard>
+                <Navigate to="/chat" replace />
+              </AuthGuard>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 import { memo } from "react";
@@ -16,24 +16,16 @@ export const SidebarItem = memo(({
   title, 
   isActive
 }: SidebarItemProps) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (location.pathname !== href) {
-      navigate(href, { replace: true });
-    }
-  };
-
   return (
     <Button
       variant={isActive ? "secondary" : "ghost"}
       className="w-full justify-start px-4"
-      onClick={handleClick}
+      asChild
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      <span className="ml-2 truncate">{title}</span>
+      <Link to={href}>
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="ml-2 truncate">{title}</span>
+      </Link>
     </Button>
   );
 });
