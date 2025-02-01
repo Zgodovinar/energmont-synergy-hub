@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { useChat } from "@/hooks/useChat";
 import ChatUserItem from "./chat/ChatUserItem";
 import ChatSearch from "./chat/ChatSearch";
@@ -11,6 +11,7 @@ import { ChatUser } from "@/types/chat";
 import { useToast } from "@/hooks/use-toast";
 import { chatService } from "@/services/chatService";
 import { useAuth } from "@/hooks/useAuth";
+import AddChatDialog from "./chat/AddChatDialog";
 
 interface ChatSidebarProps {
   selectedRoomId?: string;
@@ -19,6 +20,7 @@ interface ChatSidebarProps {
 
 const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddChat, setShowAddChat] = useState(false);
   const { toast } = useToast();
   const { session } = useAuth();
 
@@ -88,13 +90,14 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
     <div className="w-80 border-r flex flex-col">
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Direct Messages</h2>
+          <h2 className="text-xl font-semibold">Messages</h2>
           <Button
             variant="outline"
             size="icon"
-            className="invisible" // Hide the button since we're only doing direct messages
+            onClick={() => setShowAddChat(true)}
+            className="hover:bg-primary/10"
           >
-            <Plus className="h-4 w-4" />
+            <Users className="h-4 w-4" />
           </Button>
         </div>
         <ChatSearch value={searchQuery} onChange={setSearchQuery} />
@@ -119,6 +122,12 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
           )}
         </div>
       </ScrollArea>
+
+      <AddChatDialog 
+        open={showAddChat} 
+        onOpenChange={setShowAddChat} 
+        onRoomSelect={onRoomSelect}
+      />
     </div>
   );
 };
