@@ -7,7 +7,7 @@ const Layout = () => {
       <div className="fixed inset-y-0 left-0 w-64">
         <Sidebar />
       </div>
-      <main className="flex-1 pl-64 transition-all duration-300 p-8">
+      <main className="flex-1 pl-64 transition-all duration-300 px-8 py-8">
         <Outlet />
       </main>
     </div>
