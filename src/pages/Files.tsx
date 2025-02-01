@@ -69,7 +69,7 @@ const Files = () => {
   });
 
   const moveFileMutation = useMutation({
-    mutationFn: async ({ fileId, targetFolderId }: { fileId: string; targetFolderId: string }) => {
+    mutationFn: async ({ fileId, targetFolderId }: { fileId: string; targetFolderId: string | null }) => {
       const { error } = await supabase
         .from('files')
         .update({ folder_id: targetFolderId })
@@ -81,7 +81,7 @@ const Files = () => {
       queryClient.invalidateQueries({ queryKey: ['files'] });
       toast({
         title: "File moved",
-        description: "The file has been successfully moved to the folder.",
+        description: "The file has been successfully moved.",
       });
     }
   });
@@ -142,6 +142,10 @@ const Files = () => {
     }
   };
 
+  const handleMoveToRoot = (fileId: string) => {
+    moveFileMutation.mutate({ fileId, targetFolderId: null });
+  };
+
   const filteredFiles = files.filter((file) =>
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -170,6 +174,7 @@ const Files = () => {
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
+              onMoveToRoot={handleMoveToRoot}
             />
           ))}
         </div>

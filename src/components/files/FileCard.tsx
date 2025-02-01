@@ -1,4 +1,4 @@
-import { Download, Trash } from "lucide-react";
+import { Download, Trash, FolderUp } from "lucide-react";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import FileIcon from "./FileIcon";
 
@@ -11,6 +11,7 @@ interface FileCardProps {
     created_at: string;
     file_url: string;
     is_folder: boolean;
+    folder_id: string | null;
   };
   onFolderClick: (folderId: string) => void;
   onDownload: (fileUrl: string) => void;
@@ -18,6 +19,7 @@ interface FileCardProps {
   onDragStart: (e: React.DragEvent, fileId: string) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent, targetFolderId: string) => void;
+  onMoveToRoot: (fileId: string) => void;
 }
 
 const FileCard = ({ 
@@ -27,7 +29,8 @@ const FileCard = ({
   onDelete,
   onDragStart,
   onDragOver,
-  onDrop
+  onDrop,
+  onMoveToRoot
 }: FileCardProps) => {
   const renderFilePreview = () => {
     if (file.is_folder) {
@@ -75,10 +78,18 @@ const FileCard = ({
       </ContextMenuTrigger>
       <ContextMenuContent>
         {!file.is_folder && (
-          <ContextMenuItem onClick={() => onDownload(file.file_url)}>
-            <Download className="mr-2 h-4 w-4" />
-            Download
-          </ContextMenuItem>
+          <>
+            <ContextMenuItem onClick={() => onDownload(file.file_url)}>
+              <Download className="mr-2 h-4 w-4" />
+              Download
+            </ContextMenuItem>
+            {file.folder_id && (
+              <ContextMenuItem onClick={() => onMoveToRoot(file.id)}>
+                <FolderUp className="mr-2 h-4 w-4" />
+                Move to Root
+              </ContextMenuItem>
+            )}
+          </>
         )}
         <ContextMenuItem onClick={() => onDelete(file.id)}>
           <Trash className="mr-2 h-4 w-4" />
