@@ -60,12 +60,14 @@ const NotificationSound = () => {
           // Set volume to 50%
           audioRef.current.volume = 0.5;
           
-          // Try to play a silent test to handle autoplay policy
-          const playAttempt = await audioRef.current.play();
-          if (playAttempt !== undefined) {
-            playAttempt.catch(e => {
-              console.log('Autoplay prevented, waiting for user interaction:', e);
-            });
+          try {
+            // Try to play a silent test to handle autoplay policy
+            await audioRef.current.play();
+            // Immediately pause after successful play
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+          } catch (e) {
+            console.log('Autoplay prevented, waiting for user interaction:', e);
           }
         }
       } catch (error) {
