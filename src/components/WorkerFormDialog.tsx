@@ -26,6 +26,13 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
   });
   const { toast } = useToast();
 
+  const validatePassword = (password: string) => {
+    if (password.length < 6) {
+      return "Password must be at least 6 characters long";
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.role || !formData.email || !formData.password) {
@@ -37,7 +44,19 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
       return;
     }
 
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      toast({
+        title: "Error",
+        description: passwordError,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      console.log('Creating new worker with data:', { ...formData, password: '[REDACTED]' });
+      
       // Create auth user first
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -49,7 +68,12 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+      }
+
+      console.log('Auth user created successfully:', authData);
 
       // Then create worker profile
       const workerData = {
@@ -72,12 +96,17 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
         pay: undefined, 
         password: "" 
       });
-    } catch (error) {
+
+      toast({
+        title: "Success",
+        description: "Worker created successfully",
+      });
+    } catch (error: any) {
       console.error('Error creating worker:', error);
       toast({
-        title: "Error",
-        description: "Failed to create worker account",
         variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to create worker account",
       });
     }
   };
@@ -127,7 +156,7 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
               type="password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Enter worker password"
+              placeholder="Enter password (min. 6 characters)"
             />
           </div>
           <div className="space-y-2">
