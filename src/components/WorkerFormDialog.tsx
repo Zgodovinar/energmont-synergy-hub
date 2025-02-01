@@ -65,6 +65,7 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
           data: {
             full_name: formData.name,
           },
+          emailRedirectTo: `${window.location.origin}/auth`,
         },
       });
 
@@ -85,7 +86,7 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
         pay: formData.pay,
       };
 
-      onSave(workerData);
+      await onSave(workerData);
       setOpen(false);
       setFormData({ 
         name: "", 
