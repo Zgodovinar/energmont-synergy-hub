@@ -13,6 +13,7 @@ import { chatService } from "@/services/chatService";
 import { useAuth } from "@/hooks/useAuth";
 import AddChatDialog from "./chat/AddChatDialog";
 import ChatRoomItem from "./chat/ChatRoomItem";
+import ChatList from "./chat/ChatList";
 
 interface ChatSidebarProps {
   selectedRoomId?: string;
@@ -57,7 +58,6 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
       console.log('Fetching chat rooms...');
       if (!session?.user?.email) return [];
 
-      // Get current user's worker record
       const { data: currentWorker } = await supabase
         .from('workers')
         .select('id')
@@ -66,7 +66,6 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       if (!currentWorker) return [];
 
-      // Fetch all rooms where the current user is a participant
       const { data: rooms, error } = await supabase
         .from('chat_rooms')
         .select(`
@@ -85,7 +84,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
       return rooms.map(room => ({
         id: room.id,
         name: room.name,
-        type: room.type as "direct" | "group", // Type assertion here
+        type: room.type as "direct" | "group",
         participants: room.chat_room_participants.map((p: any) => ({
           id: p.worker.id,
           name: p.worker.name,
@@ -184,6 +183,8 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
       )
     : chatRooms;
 
+  const allItems = [...filteredRooms, ...filteredWorkers];
+
   return (
     <div className="w-80 border-r flex flex-col">
       <div className="p-4 border-b">
@@ -201,32 +202,17 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
         <ChatSearch value={searchQuery} onChange={setSearchQuery} />
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-2 space-y-2">
-          {isLoadingWorkers || isLoadingRooms ? (
-            <div className="p-4 text-center text-gray-500">Loading...</div>
-          ) : (
-            <>
-              {filteredRooms.map((room) => (
-                <ChatRoomItem
-                  key={room.id}
-                  room={room}
-                  isSelected={room.id === selectedRoomId}
-                  onClick={() => onRoomSelect(room.id)}
-                  onDelete={handleDeleteRoom}
-                />
-              ))}
-              {filteredWorkers.map((worker) => (
-                <ChatUserItem
-                  key={worker.id}
-                  user={worker}
-                  onClick={handleUserSelect}
-                />
-              ))}
-            </>
-          )}
-        </div>
-      </ScrollArea>
+      {isLoadingWorkers || isLoadingRooms ? (
+        <div className="p-4 text-center text-gray-500">Loading...</div>
+      ) : (
+        <ChatList
+          items={allItems}
+          selectedRoomId={selectedRoomId}
+          onRoomSelect={onRoomSelect}
+          onUserSelect={handleUserSelect}
+          onRoomDelete={handleDeleteRoom}
+        />
+      )}
 
       <AddChatDialog 
         open={showAddChat} 
