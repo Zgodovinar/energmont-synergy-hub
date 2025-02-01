@@ -224,7 +224,9 @@ export type Database = {
           created_at: string | null
           file_type: string | null
           file_url: string
+          folder_id: string | null
           id: string
+          is_folder: boolean | null
           name: string
           saved_to_files: boolean | null
           size: number | null
@@ -234,7 +236,9 @@ export type Database = {
           created_at?: string | null
           file_type?: string | null
           file_url: string
+          folder_id?: string | null
           id?: string
+          is_folder?: boolean | null
           name: string
           saved_to_files?: boolean | null
           size?: number | null
@@ -244,13 +248,22 @@ export type Database = {
           created_at?: string | null
           file_type?: string | null
           file_url?: string
+          folder_id?: string | null
           id?: string
+          is_folder?: boolean | null
           name?: string
           saved_to_files?: boolean | null
           size?: number | null
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "files_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "files_uploaded_by_fkey"
             columns: ["uploaded_by"]
