@@ -41,40 +41,43 @@ const NotificationSound = () => {
 
   // Initialize audio
   useEffect(() => {
-    const initializeAudio = () => {
-      try {
-        if (!audioRef.current) return;
-        
-        // Get the public URL directly
-        const { data: urlData } = supabase
-          .storage
-          .from('public')
-          .getPublicUrl('sounds/notification.mp3');
-        
-        if (urlData?.publicUrl) {
-          console.log('Setting notification sound URL:', urlData.publicUrl);
-          audioRef.current.src = urlData.publicUrl;
-          audioRef.current.volume = 0.5;
-          audioRef.current.load();
-        }
-      } catch (error) {
-        console.error('Error initializing audio:', error);
-      }
+    if (!audioRef.current) return;
+
+    // Get the public URL
+    const { data: urlData } = supabase
+      .storage
+      .from('public')
+      .getPublicUrl('sounds/notification.mp3');
+
+    if (urlData?.publicUrl) {
+      console.log('Setting notification sound URL:', urlData.publicUrl);
+      audioRef.current.src = urlData.publicUrl;
+      audioRef.current.volume = 0.5;
+      audioRef.current.preload = 'auto';
+    }
+
+    // Handle user interaction to enable audio
+    const enableAudio = () => {
+      if (!audioRef.current) return;
+      
+      audioRef.current.play()
+        .then(() => {
+          console.log('Audio enabled after user interaction');
+          audioRef.current!.pause();
+          audioRef.current!.currentTime = 0;
+        })
+        .catch(error => {
+          console.warn('Could not enable audio:', error);
+        });
+      
+      // Remove the listener after first interaction
+      document.removeEventListener('click', enableAudio);
     };
 
-    // Initialize audio when component mounts
-    initializeAudio();
-
-    // Add click listener to initialize audio after user interaction
-    const handleUserInteraction = () => {
-      initializeAudio();
-      document.removeEventListener('click', handleUserInteraction);
-    };
-
-    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('click', enableAudio);
 
     return () => {
-      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('click', enableAudio);
     };
   }, []);
 
@@ -97,13 +100,13 @@ const NotificationSound = () => {
           console.log('New notification received:', payload);
           
           // Play sound
-          const audio = audioRef.current;
-          if (audio) {
+          if (audioRef.current) {
             console.log('Attempting to play notification sound...');
-            audio.currentTime = 0;
-            audio.play().catch(error => {
-              console.warn('Could not play notification sound:', error);
-            });
+            audioRef.current.currentTime = 0;
+            audioRef.current.play()
+              .catch(error => {
+                console.warn('Could not play notification sound:', error);
+              });
           }
 
           // Show toast notification
