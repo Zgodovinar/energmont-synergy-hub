@@ -85,7 +85,7 @@ const NotificationSound = () => {
   return (
     <audio 
       ref={audioRef} 
-      src="/notification.mp3" 
+      src="/sounds/notification.mp3" 
       preload="auto"
       style={{ display: 'none' }}
     />
