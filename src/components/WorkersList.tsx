@@ -19,8 +19,8 @@ const WorkersList = () => {
   const { toast } = useToast();
   const { workers, isLoading, createWorker, updateWorker, deleteWorker, updateWorkerImage } = useWorkers();
 
-  const handleAddWorker = (data: CreateWorkerInput) => {
-    createWorker(data, {
+  const handleAddWorker = async (data: CreateWorkerInput) => {
+    await createWorker(data, {
       onSuccess: () => {
         toast({
           title: "Success",
@@ -37,8 +37,8 @@ const WorkersList = () => {
     });
   };
 
-  const handleEditWorker = (id: string) => (data: CreateWorkerInput) => {
-    updateWorker(
+  const handleEditWorker = (id: string) => async (data: CreateWorkerInput) => {
+    await updateWorker(
       { ...data, id },
       {
         onSuccess: () => {

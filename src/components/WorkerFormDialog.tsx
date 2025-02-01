@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Worker, CreateWorkerInput } from "@/types/worker";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +29,22 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const validationError = validateWorkerForm(formData);
+    if (!formData.email || !formData.password) {
+      toast({
+        title: "Error",
+        description: "Email and password are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const validationError = validateWorkerForm({
+      name: formData.name,
+      role: formData.role,
+      email: formData.email,
+      password: formData.password
+    });
+
     if (validationError) {
       toast({
         title: "Error",
@@ -44,7 +60,7 @@ const WorkerFormDialog = ({ worker, onSave, trigger }: WorkerFormDialogProps) =>
       // Create auth user first
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
-        password: formData.password!,
+        password: formData.password,
         options: {
           data: {
             full_name: formData.name,

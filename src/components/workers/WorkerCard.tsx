@@ -8,7 +8,7 @@ import WorkerFormDialog from "../WorkerFormDialog";
 interface WorkerCardProps {
   worker: Worker;
   viewMode: "edit" | "view";
-  onEdit: (data: CreateWorkerInput) => void;
+  onEdit: (data: CreateWorkerInput) => Promise<void>;
   onDelete: () => void;
   onView: () => void;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
