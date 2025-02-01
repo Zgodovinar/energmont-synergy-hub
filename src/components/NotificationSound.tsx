@@ -42,6 +42,8 @@ const NotificationSound = () => {
   useEffect(() => {
     if (!workerId) return;
 
+    console.log('Setting up notification listener for worker:', workerId);
+
     const channel = supabase
       .channel('notifications')
       .on(
@@ -75,6 +77,7 @@ const NotificationSound = () => {
       .subscribe();
 
     return () => {
+      console.log('Cleaning up notification listener');
       supabase.removeChannel(channel);
     };
   }, [workerId]);
@@ -84,6 +87,7 @@ const NotificationSound = () => {
       ref={audioRef} 
       src="/notification.mp3" 
       preload="auto"
+      style={{ display: 'none' }}
     />
   );
 };
