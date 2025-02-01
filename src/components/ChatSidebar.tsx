@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { chatService } from "@/services/chatService";
 import { useAuth } from "@/hooks/useAuth";
 import AddChatDialog from "./chat/AddChatDialog";
+import ChatRoomItem from "./chat/ChatRoomItem";
 
 interface ChatSidebarProps {
   selectedRoomId?: string;
@@ -35,7 +36,6 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       if (error) throw error;
 
-      // Filter out the current user from the workers list
       const currentUserEmail = session?.user?.email;
       return data
         .filter(worker => worker.email !== currentUserEmail)
@@ -50,9 +50,55 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
     enabled: !!session
   });
 
+  const { data: chatRooms = [], isLoading: isLoadingRooms } = useQuery({
+    queryKey: ['chatRooms'],
+    queryFn: async () => {
+      console.log('Fetching chat rooms...');
+      if (!session?.user?.email) return [];
+
+      // Get current user's worker record
+      const { data: currentWorker } = await supabase
+        .from('workers')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+
+      if (!currentWorker) return [];
+
+      // Fetch all rooms where the current user is a participant
+      const { data: rooms, error } = await supabase
+        .from('chat_rooms')
+        .select(`
+          *,
+          chat_room_participants!inner (
+            worker:workers (*)
+          )
+        `)
+        .eq('chat_room_participants.worker_id', currentWorker.id);
+
+      if (error) {
+        console.error('Error fetching chat rooms:', error);
+        throw error;
+      }
+
+      return rooms.map(room => ({
+        id: room.id,
+        name: room.name,
+        type: room.type,
+        participants: room.chat_room_participants.map((p: any) => ({
+          id: p.worker.id,
+          name: p.worker.name,
+          avatar: p.worker.image_url,
+          status: p.worker.status
+        })),
+        lastMessageTime: new Date(room.created_at)
+      }));
+    },
+    enabled: !!session
+  });
+
   const handleUserSelect = async (user: ChatUser) => {
     try {
-      // Get current user's worker record
       const currentUser = await supabase.auth.getUser();
       if (!currentUser.data.user) {
         toast({
@@ -63,10 +109,7 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
         return;
       }
 
-      // Get or create admin worker record if needed
       const currentWorkerId = await chatService.getOrCreateAdminWorker(currentUser.data.user.email!);
-      
-      // Get or create direct chat
       const chatId = await chatService.getOrCreateDirectChat(currentWorkerId, user.id);
       onRoomSelect(chatId);
     } catch (error) {
@@ -85,6 +128,12 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
         worker.role.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : workers;
+
+  const filteredRooms = searchQuery
+    ? chatRooms.filter(room =>
+        room.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : chatRooms;
 
   return (
     <div className="w-80 border-r flex flex-col">
@@ -105,20 +154,26 @@ const ChatSidebar = ({ selectedRoomId, onRoomSelect }: ChatSidebarProps) => {
 
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-2">
-          {isLoadingWorkers ? (
+          {isLoadingWorkers || isLoadingRooms ? (
             <div className="p-4 text-center text-gray-500">Loading...</div>
-          ) : filteredWorkers.length > 0 ? (
-            filteredWorkers.map((worker) => (
-              <ChatUserItem
-                key={worker.id}
-                user={worker}
-                onClick={handleUserSelect}
-              />
-            ))
           ) : (
-            <div className="p-4 text-center text-gray-500">
-              No workers found
-            </div>
+            <>
+              {filteredRooms.map((room) => (
+                <ChatRoomItem
+                  key={room.id}
+                  room={room}
+                  isSelected={room.id === selectedRoomId}
+                  onClick={() => onRoomSelect(room.id)}
+                />
+              ))}
+              {filteredWorkers.map((worker) => (
+                <ChatUserItem
+                  key={worker.id}
+                  user={worker}
+                  onClick={handleUserSelect}
+                />
+              ))}
+            </>
           )}
         </div>
       </ScrollArea>
