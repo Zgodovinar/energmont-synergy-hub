@@ -88,18 +88,35 @@ const Files = () => {
 
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      const { error } = await supabase
+      // First, delete any chat messages referencing this file
+      const { error: chatMessagesError } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('file_id', fileId);
+      
+      if (chatMessagesError) throw chatMessagesError;
+
+      // Then delete the file itself
+      const { error: fileError } = await supabase
         .from('files')
         .delete()
         .eq('id', fileId);
       
-      if (error) throw error;
+      if (fileError) throw fileError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', currentFolderId] });
       toast({
         title: "File deleted",
         description: "The file has been successfully deleted.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete file. Please try again.",
+        variant: "destructive"
       });
     }
   });
