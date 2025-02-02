@@ -12,48 +12,62 @@ interface AuthGuardProps {
 const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
   const { session, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
-    const checkAuthAndRole = async () => {
+    const checkSession = async () => {
       try {
-        // Only proceed if we have both session and role information
-        if (isLoading || userRole === null) {
+        console.log('Checking session state...');
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error checking session:', error);
+          await supabase.auth.signOut();
+          navigate("/auth");
           return;
         }
 
-        console.log('Checking auth state:', { session: !!session, userRole, requireAdmin });
-
-        if (!session) {
-          console.log('No session, redirecting to auth');
+        console.log('Current session:', currentSession ? 'exists' : 'none');
+        
+        if (!currentSession) {
+          console.log('No session found, redirecting to auth...');
           await supabase.auth.signOut();
           navigate("/auth");
           return;
         }
 
         if (requireAdmin && userRole !== "admin") {
-          console.log('User is not admin, redirecting to chat');
+          console.log('User is not admin, redirecting...');
           navigate("/chat");
-          return;
         }
-
-        setIsAuthenticated(true);
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('Session check failed:', error);
         await supabase.auth.signOut();
         navigate("/auth");
+      } finally {
+        setIsCheckingSession(false);
       }
     };
 
-    checkAuthAndRole();
+    if (!isLoading) {
+      checkSession();
+    }
   }, [session, isLoading, userRole, navigate, requireAdmin]);
 
-  if (isLoading || !isAuthenticated) {
+  if (isLoading || isCheckingSession) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  if (requireAdmin && userRole !== "admin") {
+    return null;
   }
 
   return <>{children}</>;
