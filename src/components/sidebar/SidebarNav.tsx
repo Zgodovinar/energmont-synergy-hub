@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { SidebarItem } from "./SidebarItem";
 import { menuItems } from "./menuItems";
+import { useEffect, useState } from "react";
 
 interface SidebarNavProps {
   isAdmin: boolean;
@@ -11,23 +12,25 @@ interface SidebarNavProps {
 
 export const SidebarNav = ({ isAdmin, signOut }: SidebarNavProps) => {
   const location = useLocation();
+  const [visibleItems, setVisibleItems] = useState(menuItems);
 
-  // Filter menu items based on user role
-  const visibleMenuItems = menuItems.filter(item => {
-    if (!isAdmin) {
-      // Only show chat and notifications for workers
-      return ['chat', 'notifications'].includes(item.href.replace('/', ''));
-    }
-    return true;
-  });
+  // Only update visible items when isAdmin changes
+  useEffect(() => {
+    console.log('Updating visible menu items. isAdmin:', isAdmin);
+    const filteredItems = menuItems.filter(item => {
+      if (!isAdmin) {
+        return ['chat', 'notifications'].includes(item.href.replace('/', ''));
+      }
+      return true;
+    });
+    setVisibleItems(filteredItems);
+  }, [isAdmin]);
 
   return (
     <div className="px-3 py-2">
       <div className="space-y-1">
-        {visibleMenuItems.map((item) => {
-          if (item.adminOnly && !isAdmin) return null;
+        {visibleItems.map((item) => {
           const isActive = location.pathname === item.href;
-
           return (
             <SidebarItem
               key={item.href}
