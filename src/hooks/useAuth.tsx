@@ -5,7 +5,11 @@ import { Session } from "@supabase/supabase-js";
 export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState<'admin' | 'worker' | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'worker' | null>(() => {
+    // Initialize from localStorage if available
+    const storedRole = localStorage.getItem('userRole');
+    return (storedRole as 'admin' | 'worker' | null) || null;
+  });
 
   const fetchUserRole = useCallback(async (userId: string) => {
     try {
@@ -23,6 +27,7 @@ export const useAuth = () => {
 
       console.log('User role fetched:', data.role);
       setUserRole(data.role);
+      localStorage.setItem('userRole', data.role);
     } catch (error) {
       console.error('Error in fetchUserRole:', error);
     }
@@ -43,6 +48,7 @@ export const useAuth = () => {
             await fetchUserRole(currentSession.user.id);
           } else {
             setUserRole(null);
+            localStorage.removeItem('userRole');
           }
         }
       } catch (error) {
@@ -66,6 +72,7 @@ export const useAuth = () => {
           await fetchUserRole(session.user.id);
         } else {
           setUserRole(null);
+          localStorage.removeItem('userRole');
         }
       }
     });
@@ -78,6 +85,7 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      localStorage.removeItem('userRole');
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Error signing out:', error);

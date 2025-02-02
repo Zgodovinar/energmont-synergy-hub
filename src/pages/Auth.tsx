@@ -17,6 +17,7 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
+      // First sign in the user
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -38,6 +39,9 @@ const Auth = () => {
         }
         return;
       }
+
+      // Wait a moment for the auth state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Get user role from profiles table
       const { data: profileData, error: profileError } = await supabase
@@ -68,6 +72,9 @@ const Auth = () => {
         return;
       }
 
+      // Store the role in localStorage to prevent flicker
+      localStorage.setItem('userRole', profileData.role);
+
       // Redirect based on role
       if (profileData.role === 'worker') {
         console.log('Redirecting worker to chat');
@@ -83,6 +90,7 @@ const Auth = () => {
       });
 
     } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Error",
