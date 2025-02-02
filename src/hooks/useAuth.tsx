@@ -10,6 +10,7 @@ export const useAuth = () => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session ? 'exists' : 'none');
       setSession(session);
       if (session?.user) {
         fetchUserRole(session.user.id);
@@ -21,6 +22,7 @@ export const useAuth = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state changed:', _event);
       setSession(session);
       if (session?.user) {
         fetchUserRole(session.user.id);
@@ -33,24 +35,59 @@ export const useAuth = () => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching user role:', error);
-      return;
+      if (error) {
+        console.error('Error fetching user role:', error);
+        return;
+      }
+
+      console.log('Fetched user role:', data.role);
+      setUserRole(data.role);
+    } catch (error) {
+      console.error('Error in fetchUserRole:', error);
     }
-
-    setUserRole(data.role);
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error);
+    try {
+      console.log('Attempting to sign out...');
+      
+      // Clear all cookies
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i];
+        const eqPos = cookie.indexOf('=');
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      }
+
+      // Clear localStorage
+      localStorage.clear();
+      
+      // Clear sessionStorage
+      sessionStorage.clear();
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        // Even if there's an error, we want to clear the local session
+        setSession(null);
+        setUserRole(null);
+      }
+
+      console.log('Sign out completed');
+    } catch (error) {
+      console.error('Error in signOut:', error);
+      // Ensure we clear local state even if the API call fails
+      setSession(null);
+      setUserRole(null);
     }
   };
 

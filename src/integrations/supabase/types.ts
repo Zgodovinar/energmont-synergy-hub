@@ -536,12 +536,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_worker_projects_count: {
-        Args: {
-          worker_uuid: string
-        }
-        Returns: number
-      }
+      get_worker_projects_count:
+        | {
+            Args: Record<PropertyKey, never>
+            Returns: number
+          }
+        | {
+            Args: {
+              worker_uuid: string
+            }
+            Returns: number
+          }
     }
     Enums: {
       app_role: "admin" | "worker"

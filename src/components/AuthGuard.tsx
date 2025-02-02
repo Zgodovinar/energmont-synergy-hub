@@ -10,7 +10,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
-  const { session, isLoading, userRole } = useAuth();
+  const { session, isLoading, userRole, signOut } = useAuth();
   const navigate = useNavigate();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
@@ -22,7 +22,7 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
         
         if (error) {
           console.error('Error checking session:', error);
-          await supabase.auth.signOut();
+          await signOut();
           navigate("/auth");
           return;
         }
@@ -31,7 +31,7 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
         
         if (!currentSession) {
           console.log('No session found, redirecting to auth...');
-          await supabase.auth.signOut();
+          await signOut();
           navigate("/auth");
           return;
         }
@@ -42,7 +42,7 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
         }
       } catch (error) {
         console.error('Session check failed:', error);
-        await supabase.auth.signOut();
+        await signOut();
         navigate("/auth");
       } finally {
         setIsCheckingSession(false);
@@ -52,7 +52,7 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
     if (!isLoading) {
       checkSession();
     }
-  }, [session, isLoading, userRole, navigate, requireAdmin]);
+  }, [session, isLoading, userRole, navigate, requireAdmin, signOut]);
 
   if (isLoading || isCheckingSession) {
     return (
