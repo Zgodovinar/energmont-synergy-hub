@@ -10,7 +10,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
-  const { session, isLoading, userRole, signOut } = useAuth();
+  const { session, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -25,28 +25,28 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
         console.log('Checking auth state:', { session: !!session, userRole, requireAdmin });
 
         if (!session) {
-          console.log('No session, signing out and redirecting to auth');
-          await signOut(); // This will clear cookies and local storage
-          navigate("/auth", { replace: true });
+          console.log('No session, redirecting to auth');
+          await supabase.auth.signOut();
+          navigate("/auth");
           return;
         }
 
         if (requireAdmin && userRole !== "admin") {
           console.log('User is not admin, redirecting to chat');
-          navigate("/chat", { replace: true });
+          navigate("/chat");
           return;
         }
 
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Auth check failed:', error);
-        await signOut(); // This will clear cookies and local storage
-        navigate("/auth", { replace: true });
+        await supabase.auth.signOut();
+        navigate("/auth");
       }
     };
 
     checkAuthAndRole();
-  }, [session, isLoading, userRole, navigate, requireAdmin, signOut]);
+  }, [session, isLoading, userRole, navigate, requireAdmin]);
 
   if (isLoading || !isAuthenticated) {
     return (

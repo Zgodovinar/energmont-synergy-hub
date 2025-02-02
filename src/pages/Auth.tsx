@@ -16,41 +16,18 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Basic validation
-    if (!email || !password) {
-      setIsLoading(false);
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please enter both email and password",
-      });
-      return;
-    }
-
     try {
-      console.log('Attempting to sign in with:', { email });
-
-      // First sign in the user
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log('Sign in response:', { signInData, error: signInError });
-
       if (signInError) {
-        setIsLoading(false);
         if (signInError.message.includes("Email not confirmed")) {
           toast({
             variant: "destructive",
             title: "Email Not Confirmed",
             description: "Please check your email to confirm your account.",
-          });
-        } else if (signInError.message.includes("Invalid login credentials")) {
-          toast({
-            variant: "destructive",
-            title: "Invalid Credentials",
-            description: "The email or password you entered is incorrect.",
           });
         } else {
           toast({
@@ -72,7 +49,6 @@ const Auth = () => {
       console.log('Profile query result:', { profileData, profileError });
 
       if (profileError) {
-        setIsLoading(false);
         console.error('Error fetching profile:', profileError);
         toast({
           variant: "destructive",
@@ -83,7 +59,6 @@ const Auth = () => {
       }
 
       if (!profileData) {
-        setIsLoading(false);
         console.error('No profile found for email:', email);
         toast({
           variant: "destructive",
@@ -92,9 +67,6 @@ const Auth = () => {
         });
         return;
       }
-
-      // Store the role in localStorage to prevent flicker
-      localStorage.setItem('userRole', profileData.role);
 
       // Redirect based on role
       if (profileData.role === 'worker') {
@@ -111,12 +83,10 @@ const Auth = () => {
       });
 
     } catch (error: any) {
-      setIsLoading(false);
-      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "An unexpected error occurred",
+        description: error.message,
       });
     } finally {
       setIsLoading(false);
