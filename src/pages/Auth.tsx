@@ -24,6 +24,7 @@ const Auth = () => {
       });
 
       if (signInError) {
+        setIsLoading(false); // Important: Reset loading state on error
         if (signInError.message.includes("Email not confirmed")) {
           toast({
             variant: "destructive",
@@ -40,9 +41,6 @@ const Auth = () => {
         return;
       }
 
-      // Wait a moment for the auth state to update
-      await new Promise(resolve => setTimeout(resolve, 100));
-
       // Get user role from profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -53,6 +51,7 @@ const Auth = () => {
       console.log('Profile query result:', { profileData, profileError });
 
       if (profileError) {
+        setIsLoading(false); // Important: Reset loading state on error
         console.error('Error fetching profile:', profileError);
         toast({
           variant: "destructive",
@@ -63,6 +62,7 @@ const Auth = () => {
       }
 
       if (!profileData) {
+        setIsLoading(false); // Important: Reset loading state on error
         console.error('No profile found for email:', email);
         toast({
           variant: "destructive",
@@ -90,6 +90,7 @@ const Auth = () => {
       });
 
     } catch (error: any) {
+      setIsLoading(false); // Important: Reset loading state on error
       console.error('Login error:', error);
       toast({
         variant: "destructive",
