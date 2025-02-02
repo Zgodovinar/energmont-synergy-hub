@@ -13,6 +13,7 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
   const { session, isLoading, userRole } = useAuth();
   const navigate = useNavigate();
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [hasCheckedRole, setHasCheckedRole] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -35,11 +36,6 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
           navigate("/auth");
           return;
         }
-
-        if (requireAdmin && userRole !== "admin") {
-          console.log('User is not admin, redirecting...');
-          navigate("/chat");
-        }
       } catch (error) {
         console.error('Session check failed:', error);
         await supabase.auth.signOut();
@@ -52,9 +48,21 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
     if (!isLoading) {
       checkSession();
     }
-  }, [session, isLoading, userRole, navigate, requireAdmin]);
+  }, [session, isLoading, navigate]);
 
-  if (isLoading || isCheckingSession) {
+  // Separate effect for role checking to prevent race conditions
+  useEffect(() => {
+    if (!isCheckingSession && userRole !== null) {
+      console.log('Checking user role:', userRole, 'requireAdmin:', requireAdmin);
+      if (requireAdmin && userRole !== "admin") {
+        console.log('User is not admin, redirecting to chat...');
+        navigate("/chat");
+      }
+      setHasCheckedRole(true);
+    }
+  }, [isCheckingSession, userRole, requireAdmin, navigate]);
+
+  if (isLoading || isCheckingSession || !hasCheckedRole) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
