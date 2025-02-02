@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { SidebarItem } from "./SidebarItem";
 import { menuItems } from "./menuItems";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 interface SidebarNavProps {
   isAdmin: boolean;
@@ -12,19 +12,17 @@ interface SidebarNavProps {
 
 export const SidebarNav = ({ isAdmin, signOut }: SidebarNavProps) => {
   const location = useLocation();
-  const [visibleItems, setVisibleItems] = useState(menuItems);
 
-  // Only update visible items when isAdmin changes
-  useEffect(() => {
-    console.log('Updating visible menu items. isAdmin:', isAdmin);
-    const filteredItems = menuItems.filter(item => {
+  // Memoize the filtered items to prevent unnecessary recalculation
+  const visibleItems = useMemo(() => {
+    console.log('Computing visible menu items. isAdmin:', isAdmin);
+    return menuItems.filter(item => {
       if (!isAdmin) {
         return ['chat', 'notifications'].includes(item.href.replace('/', ''));
       }
       return true;
     });
-    setVisibleItems(filteredItems);
-  }, [isAdmin]);
+  }, [isAdmin]); // Only recompute when isAdmin changes
 
   return (
     <div className="px-3 py-2">

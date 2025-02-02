@@ -17,32 +17,22 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
   useEffect(() => {
     const checkAuthAndRole = async () => {
       try {
-        console.log('Checking session and role...');
-        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error checking session:', error);
+        // Only proceed if we have both session and role information
+        if (isLoading || userRole === null) {
+          return;
+        }
+
+        console.log('Checking auth state:', { session: !!session, userRole, requireAdmin });
+
+        if (!session) {
+          console.log('No session, redirecting to auth');
           await supabase.auth.signOut();
           navigate("/auth");
           return;
         }
 
-        if (!currentSession) {
-          console.log('No session found, redirecting to auth...');
-          await supabase.auth.signOut();
-          navigate("/auth");
-          return;
-        }
-
-        // Wait for userRole to be available
-        if (userRole === null) {
-          console.log('Waiting for user role...');
-          return;
-        }
-
-        console.log('User role available:', userRole, 'requireAdmin:', requireAdmin);
         if (requireAdmin && userRole !== "admin") {
-          console.log('User is not admin, redirecting to chat...');
+          console.log('User is not admin, redirecting to chat');
           navigate("/chat");
           return;
         }
@@ -55,9 +45,7 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
       }
     };
 
-    if (!isLoading) {
-      checkAuthAndRole();
-    }
+    checkAuthAndRole();
   }, [session, isLoading, userRole, navigate, requireAdmin]);
 
   if (isLoading || !isAuthenticated) {
@@ -66,14 +54,6 @@ const AuthGuard = ({ children, requireAdmin = false }: AuthGuardProps) => {
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
-  }
-
-  if (!session) {
-    return null;
-  }
-
-  if (requireAdmin && userRole !== "admin") {
-    return null;
   }
 
   return <>{children}</>;
